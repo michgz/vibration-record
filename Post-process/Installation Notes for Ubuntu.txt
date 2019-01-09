@@ -1,0 +1,27 @@
+The program postproc.py takes as an argument the path of a directory. It reads in and processes all files
+of extension .CSV within that directory. The result is an OpenOffice Calc file (extension .ODS) with the
+processed results.
+
+It requires Python 2.7.
+
+To allow a right-click context menu in Ubuntu with Thunar as the file browser, edit the file ~/.config/Thunar/uca.xml
+in the following way:
+
+
+<actions>
+
+    :
+    :
+   (Existing content is here)
+    :
+    :
+<action>
+        <icon>ooo-calc</icon>
+        <name>Vibration post-process</name>
+        <unique-id>147740595582654-2</unique-id>
+        <command>python /the/path/to/the/script/Post-process/postproc.py %f</command>
+        <description>Send to vibration analysis program</description>
+        <patterns>*</patterns>
+        <directories/>
+</action>
+</actions>
