@@ -18,6 +18,8 @@ includeTraces = False
 def bIncludeTraces():
  return includeTraces
 
+def bAddHeartbeatsTable():
+ return True
 
 ## Calculate square of a number
 def sq(x):
@@ -55,9 +57,10 @@ class Trace:
      max_sq_pos = j
     sumsq += pt_sumsq
    # In case of ADXL, scale RMS measurements to be equivalent to LSM6
+   #  -- now not needed; just use 1
    scaler = 1.
-   if (self.device_type == "ADXL"):
-    scaler = 256000./16384.
+   #if (self.device_type == "ADXL"):
+   # scaler = 256000./16384.
    return [ num, numpy.sqrt((1.0*(sumsq))/num) / scaler, numpy.sqrt(1.0*max_sq) / scaler ]
 
  def Clear(self):
@@ -114,6 +117,17 @@ def FlushPreviousTrace(file, prev_trace):
  file.write(   "<table:table-cell/><table:table-cell/>\r\n"    )   # Note the EOL! It will be needed when we read this file back.
 
 
+def WriteHeartbeatLine(file, dt, str1_line, str2_line, rr):
+ file.write(   "<table:table-cell/>"   )
+ file.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %   (rr, rr)   )
+ file.write(   "<table:table-cell table:style-name=\"ce1\" office:value-type=\"date\" office:date-value=\"%04d-%02d-%02d\" calcext:value-type=\"date\"><text:p>%02d/%02d/%04d</text:p></table:table-cell>" % (dt.year, dt.month, dt.day, dt.day, dt.month, dt.year)  )
+ file.write(   "<table:table-cell table:style-name=\"ce2\" office:value-type=\"time\" office:time-value=\"PT%02dH%02dM%02dS\" calcext:value-type=\"time\"><text:p>%02d:%02d:%02d</text:p></table:table-cell>"   %  ( dt.hour, dt.minute, dt.second, dt.hour, dt.minute, dt.second )  )
+ file.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>"    % str1_line   )
+ file.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>"    % str2_line   )
+ file.write(    "\r\n"   )   # Important! 
+ 
+
+
 def IsLikelyDateTime(str):
  if len(str) < 16:
   return False
@@ -131,7 +145,7 @@ def IsLikelyDateTime(str):
 ######################################################################
 
 
-runningPath = os.path.dirname(__file__)   # the directory of this .PY file
+runningPath = os.path.dirname(os.path.realpath(__file__))   # the directory of this .PY file
 
 # Open log file
 with open( runningPath + "/log.txt", "a") as f9:
@@ -145,6 +159,10 @@ with open( runningPath + "/log.txt", "a") as f9:
 
  thePath = sys.argv[1]
 
+ if not os.path.isabs(thePath):
+  # Turn a relative path into an absolute one
+  thePath = os.getcwd() + "/" + sys.argv[1]
+
  f9.write( "Input path: %s\r" % thePath )
 
  if not os.path.exists(thePath):
@@ -153,10 +171,6 @@ with open( runningPath + "/log.txt", "a") as f9:
 
  if not os.path.isdir(thePath):
   f9.write( "ERROR: Input path is not a directory. Terminating\r")
-  sys.exit(0)
-
- if not os.path.isabs(thePath):
-  f9.write( "ERROR: Input path has a relative component. Terminating\r" )
   sys.exit(0)
 
  if not os.path.basename(thePath):
@@ -191,8 +205,10 @@ with open( runningPath + "/log.txt", "a") as f9:
 
 
 
- ##dir_name = 'Raw_ADXL'
- # Read exclusion
+ #######################################################
+ ###  Read excluded traces from a specifically-named  ##
+ ###  file, if it exists.                             ##
+
  exclude = []
  try:
   with open(thePath + '/Exclude.txt', 'r') as f3:
@@ -227,8 +243,10 @@ with open( runningPath + "/log.txt", "a") as f9:
 
 
   f7 = open(runningPath +  "/7", "w")
-
-  ######################################################
+  f8 = open(runningPath +  "/8", "w")
+  
+  
+  ################################################
   ###  Process the inputs                       ##
 
   dest.write(       "<office:body><office:spreadsheet><table:calculation-settings table:automatic-find-labels=\"false\"/>"     )
@@ -241,6 +259,7 @@ with open( runningPath + "/log.txt", "a") as f9:
   current_trace = Trace()
   current_trace_line_number = 0
   current_trace_dt = datetime.datetime(2017, 1, 1, 0, 0)
+  current_header_line = ""
   a = 0
   the_index = 0
   the_row = 0
@@ -265,33 +284,40 @@ with open( runningPath + "/log.txt", "a") as f9:
        except ValueError:
         dt = datetime.datetime(2017, 1, 1, 0, 0)
 
-       # Check if there is a previous trace to flush
-       if (current_trace.data_pos >= 250):
-        StartNextTrace(f7, current_trace_line_number, current_trace_dt)
-        MidOfTrace(f7, current_trace.device_type )
-        FlushPreviousTrace(f7, current_trace)
-        if (current_trace.data_pos > maxLength):
-         maxLength = current_trace.data_pos
+       delta_dt = dt - current_trace_dt;
+       if (delta_dt.total_seconds() >= 7) or (current_trace.data_pos < 250):
+        # Each trace is 500 points long. At 104Hz or 125Hz that's about 5 seconds.
+        # If the condition above is true, we should start a new trace, otherwise it
+        # can be a continuation of the old one.
+        #
+        #
+        # Check if there is a previous trace to flush
+        if (current_trace.data_pos >= 250):
+         StartNextTrace(f7, current_trace_line_number, current_trace_dt)
+         MidOfTrace(f7, current_trace.device_type )
+         FlushPreviousTrace(f7, current_trace)
+         if (current_trace.data_pos > maxLength):
+          maxLength = current_trace.data_pos
+         the_index += 1
+
+        # Start the new trace
+        current_trace.Clear()
+        if bIsLineNumberOkay():
+         current_trace_line_number = line_number
+        else:
+         current_trace_line_number = -1
+        current_trace_dt = dt
+        current_trace.device_type = ""
         the_index += 1
+        excluded = (the_index in exclude)
 
-       # Start the new trace
-       current_trace.Clear()
-       if bIsLineNumberOkay():
-        current_trace_line_number = line_number
-       else:
-        current_trace_line_number = -1
-       current_trace_dt = dt
-       current_trace.device_type = ""
-       the_index += 1
-       excluded = (the_index in exclude)
+        # Now write to the Data sheet
+        if bIncludeTraces() and bIsLineNumberOkay():
+         dest.write(  (   "<table:table-cell table:style-name=\"ce1\" office:value-type=\"date\" office:date-value=\"%04d-%02d-%02d\" calcext:value-type=\"date\"><text:p>%02d/%02d/%04d</text:p></table:table-cell>"  % (dt.year, dt.month, dt.day, dt.day, dt.month, dt.year)   )     )
+         dest.write(  (   "<table:table-cell table:style-name=\"ce2\" office:value-type=\"time\" office:time-value=\"PT%02dH%02dM%02dS\" calcext:value-type=\"time\"><text:p>%02d:%02d:%02d</text:p></table:table-cell>"   %  ( dt.hour, dt.minute, dt.second, dt.hour, dt.minute, dt.second )    )    )
+         dest.write(      "<table:table-cell/>"       )
 
-       # Now write to the Data sheet
-       if bIncludeTraces() and bIsLineNumberOkay():
-        dest.write(  (   "<table:table-cell table:style-name=\"ce1\" office:value-type=\"date\" office:date-value=\"%04d-%02d-%02d\" calcext:value-type=\"date\"><text:p>%02d/%02d/%04d</text:p></table:table-cell>"  % (dt.year, dt.month, dt.day, dt.day, dt.month, dt.year)   )     )
-        dest.write(  (   "<table:table-cell table:style-name=\"ce2\" office:value-type=\"time\" office:time-value=\"PT%02dH%02dM%02dS\" calcext:value-type=\"time\"><text:p>%02d:%02d:%02d</text:p></table:table-cell>"   %  ( dt.hour, dt.minute, dt.second, dt.hour, dt.minute, dt.second )    )    )
-        dest.write(      "<table:table-cell/>"       )
-
-       the_row += 1
+        the_row += 1
        a = 1
      else:
       if (a==1):
@@ -305,13 +331,22 @@ with open( runningPath + "/log.txt", "a") as f9:
        if bIncludeTraces() and bIsLineNumberOkay():
         dest.write(      "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % (line.split(',')[0])   )
         dest.write(      "<table:table-cell table:number-columns-repeated=\"2\"/>"     )
+       current_header_line = line.strip()  # Only used if next line is "HEARTBEAT"
        the_row += 1
+      elif (a==2) and (line.find("HEARTBEAT") >= 0):
+       # It's a heartbeat line. Just copy the string value
+       if bIncludeTraces() and bIsLineNumberOkay():
+        dest.write(      "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % line   )
+        dest.write(      "<table:table-cell table:number-columns-repeated=\"2\"/>"     )
+       WriteHeartbeatLine(f8, current_trace_dt, line.strip(), current_header_line, the_row)
+       the_row += 1
+       a += 1
       else:
        d = line.split(',')
        d_num = [0, 0, 0]
        if (len(d) >= 1):
         try:
-         d_num[0] = int(d[0].strip())
+         d_num[0] = float(d[0].strip())
          if bIncludeTraces() and bIsLineNumberOkay():
           dest.write(    ( "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (d_num[0], d_num[0])  )    )
         except ValueError:
@@ -319,7 +354,7 @@ with open( runningPath + "/log.txt", "a") as f9:
           dest.write(      "<table:table-cell/>"           )        # cannot convert -- leave as empty cell
        if (len(d) >= 2):
         try:
-         d_num[1] = int(d[1].strip())
+         d_num[1] = float(d[1].strip())
          if bIncludeTraces() and bIsLineNumberOkay():
           dest.write(    ( "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (d_num[1], d_num[1])  )    )
         except ValueError:
@@ -327,7 +362,7 @@ with open( runningPath + "/log.txt", "a") as f9:
           dest.write(      "<table:table-cell/>"           )        # cannot convert -- leave as empty cell
        if (len(d) >= 3):
         try:
-         d_num[2] = int(d[2].strip())
+         d_num[2] = float(d[2].strip())
          if bIncludeTraces() and bIsLineNumberOkay():
           dest.write(    ( "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (d_num[2], d_num[2])  )    )
         except ValueError:
@@ -351,6 +386,7 @@ with open( runningPath + "/log.txt", "a") as f9:
    the_index += 1
 
 
+  f8.close()
   f7.close()
 
 
@@ -372,22 +408,23 @@ with open( runningPath + "/log.txt", "a") as f9:
   dest.write("<table:table table:name=\"List\" table:style-name=\"ta1\">")
 
 
-  dest.write(    "<table:shapes><draw:frame draw:z-index=\"0\" draw:style-name=\"gr1\" draw:text-style-name=\"P1\" svg:width=\"329.58mm\" svg:height=\"182.48mm\" svg:x=\"258.82mm\" svg:y=\"36.39mm\">"     )
-  dest.write(    "<loext:p draw:notify-on-update-of-ranges=\""    );
+  if bIncludeTraces():
+   dest.write(    "<table:shapes><draw:frame draw:z-index=\"0\" draw:style-name=\"gr1\" draw:text-style-name=\"P1\" svg:width=\"329.58mm\" svg:height=\"182.48mm\" svg:x=\"258.82mm\" svg:y=\"36.39mm\">"     )
+   dest.write(    "<loext:p draw:notify-on-update-of-ranges=\""    );
 
-  dest.write(    "List.N7:List.N%d " % (maxLength + 6))
-  dest.write(    "List.O6:List.O6 "   )
-  dest.write(    "List.O7:List.O%d " % (maxLength + 6))
-  dest.write(    "List.N7:List.N%d " % (maxLength + 6))
-  dest.write(    "List.P6:List.P6 "   )
-  dest.write(    "List.P7:List.P%d " % (maxLength + 6))
-  dest.write(    "List.N7:List.N%d " % (maxLength + 6))
-  dest.write(    "List.Q6:List.Q6 "  )
-  dest.write(    "List.Q7:List.Q%d\"/>" % (maxLength + 6))
+   dest.write(    "List.N7:List.N%d " % (maxLength + 6))
+   dest.write(    "List.O6:List.O6 "   )
+   dest.write(    "List.O7:List.O%d " % (maxLength + 6))
+   dest.write(    "List.N7:List.N%d " % (maxLength + 6))
+   dest.write(    "List.P6:List.P6 "   )
+   dest.write(    "List.P7:List.P%d " % (maxLength + 6))
+   dest.write(    "List.N7:List.N%d " % (maxLength + 6))
+   dest.write(    "List.Q6:List.Q6 "  )
+   dest.write(    "List.Q7:List.Q%d\"/>" % (maxLength + 6))
 
-  dest.write(    "<draw:object xlink:href=\"./Object 1\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"/>"     )
-  dest.write(    "<draw:image xlink:href=\"./ObjectReplacements/Object 1\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"/>"    )
-  dest.write(    "</draw:frame></table:shapes>"    )
+   dest.write(    "<draw:object xlink:href=\"./Object 1\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"/>"     )
+   dest.write(    "<draw:image xlink:href=\"./ObjectReplacements/Object 1\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"/>"    )
+   dest.write(    "</draw:frame></table:shapes>"    )
 
 
 
@@ -471,11 +508,28 @@ with open( runningPath + "/log.txt", "a") as f9:
 
 
   dest.write(    "</table:table>"     )
+  if bAddHeartbeatsTable():
+   dest.write(    "<table:table table:name=\"Heartbeats\" table:style-name=\"ta1\">"   )
+   dest.write(    "<table:table-column table:style-name=\"co1\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/>"   )
+   dest.write(    "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"ce7\"/>"   )
+   dest.write(    "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"ce2\"/>"   )
+   dest.write(    "<table:table-column table:style-name=\"co1\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/>"   )
+   dest.write(    "<table:table-row table:style-name=\"ro1\"><table:table-cell/><table:table-cell table:style-name=\"ce7\"/><table:table-cell table:style-name=\"Default\" table:number-columns-repeated=\"2\"/><table:table-cell table:number-columns-repeated=\"2\"/>"   )
+   dest.write(    "</table:table-row>"   )
+   f8 = open(  runningPath +  "/8", "r"  )   # Same file as before, reading back
+   for f8_line in f8:
+    dest.write(   "<table:table-row table:style-name=\"ro1\">"   )
+    dest.write(   f8_line  )
+    dest.write(   "</table:table-row>"   )
+   f8.close()
+   dest.write(    "</table:table>"   )
+
+
   dest.write(    "<table:named-expressions/></office:spreadsheet></office:body></office:document-content>")
 
 
  ##### Now write to the ZIP archive  ####
- shutil.copy2(  runningPath + "/3_1.ods", theName)
+ shutil.copy2(  runningPath + "/template_content/3_1.ods", theName)
  with zipfile.ZipFile(theName, "a") as z:
   z.write(  runningPath +  "/content_local.xml", "content.xml", zipfile.ZIP_DEFLATED )
   z.close()
