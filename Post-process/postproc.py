@@ -86,8 +86,11 @@ def StartNextTrace(file, start_row, next_dt):
   file.write(  "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>" % (start_row, start_row)   )
  else:
   file.write(  "<table:table-cell/>"    )
- file.write(   "<table:table-cell table:style-name=\"ce1\" office:value-type=\"date\" office:date-value=\"%04d-%02d-%02d\" calcext:value-type=\"date\"><text:p>%02d/%02d/%04d</text:p></table:table-cell>" % (next_dt.year, next_dt.month, next_dt.day, next_dt.day, next_dt.month, next_dt.year)  )
- file.write(   "<table:table-cell table:style-name=\"ce2\" office:value-type=\"time\" office:time-value=\"PT%02dH%02dM%02dS\" calcext:value-type=\"time\"><text:p>%02d:%02d:%02d</text:p></table:table-cell>"   %  ( next_dt.hour, next_dt.minute, next_dt.second, next_dt.hour, next_dt.minute, next_dt.second )  )
+ file.write(   "<table:table-cell table:style-name=\"ce3\" office:value-type=\"date\" office:date-value=\"%04d-%02d-%02dT%02d:%02d:%02d\" calcext:value-type=\"date\">"    % (next_dt.year, next_dt.month, next_dt.day, next_dt.hour, next_dt.minute, next_dt.second )  )
+ file.write(    "<text:p>%02d/%02d/%04d %02d:%02d:%02d</text:p>"    % (next_dt.day, next_dt.month, next_dt.year, next_dt.hour, next_dt.minute, next_dt.second )  )
+ file.write(   "</table:table-cell>"   )
+ file.write(   "<table:table-cell/>"    )
+
 
 def MidOfTrace(file, device_type):
  if (device_type == "ADXL"):
@@ -120,10 +123,83 @@ def FlushPreviousTrace(file, prev_trace):
 def WriteHeartbeatLine(file, dt, str1_line, str2_line, rr):
  file.write(   "<table:table-cell/>"   )
  file.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %   (rr, rr)   )
- file.write(   "<table:table-cell table:style-name=\"ce1\" office:value-type=\"date\" office:date-value=\"%04d-%02d-%02d\" calcext:value-type=\"date\"><text:p>%02d/%02d/%04d</text:p></table:table-cell>" % (dt.year, dt.month, dt.day, dt.day, dt.month, dt.year)  )
- file.write(   "<table:table-cell table:style-name=\"ce2\" office:value-type=\"time\" office:time-value=\"PT%02dH%02dM%02dS\" calcext:value-type=\"time\"><text:p>%02d:%02d:%02d</text:p></table:table-cell>"   %  ( dt.hour, dt.minute, dt.second, dt.hour, dt.minute, dt.second )  )
+ file.write(   "<table:table-cell table:style-name=\"ce3\" office:value-type=\"date\" office:date-value=\"%04d-%02d-%02dT%02d:%02d:%02d\" calcext:value-type=\"date\">"    % (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second )  )
+ file.write(    "<text:p>%02d/%02d/%04d %02d:%02d:%02d</text:p>"    % (dt.day, dt.month, dt.year, dt.hour, dt.minute, dt.second )  )
+ file.write(   "</table:table-cell>"   )
  file.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>"    % str1_line   )
- file.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>"    % str2_line   )
+ #
+ # Search for "S="
+ #
+ nn = str2_line.find( "S="  )
+ if (nn >= 0):
+  file.write(    ( "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>"   %  ( str2_line[nn+2:].split()[0] )  )    )
+ else:
+  file.write(   "<table:table-cell/>"   )   # Not found any data -- empty cell 
+ #
+ # Search for "Tacc"
+ #
+ nn = str2_line.lower().find( "tacc="  )
+ if (nn >= 0):
+  try:
+   ff = float( str2_line[nn+5:].split()[0] )
+  except ValueError:
+   nn = -1
+ if (nn >= 0):
+  file.write(    ( "<table:table-cell office:value-type=\"float\" office:value=\"%f\" calcext:value-type=\"float\"><text:p>%f</text:p></table:table-cell>"   %  (ff, ff)  )    )
+ else:
+  file.write(   "<table:table-cell/>"   )   # Not found any data -- empty cell
+ #
+ # Search for "Tint"
+ #
+ nn = str2_line.lower().find( "tint="  )
+ if (nn >= 0):
+  try:
+   ff = float( str2_line[nn+5:].split()[0] )
+  except ValueError:
+   nn = -1
+ if (nn >= 0):
+  file.write(    ( "<table:table-cell office:value-type=\"float\" office:value=\"%f\" calcext:value-type=\"float\"><text:p>%f</text:p></table:table-cell>"   %  (ff, ff)  )    )
+ else:
+  file.write(   "<table:table-cell/>"   )   # Not found any data -- empty cell
+ #
+ # Search for "Vbat"
+ #
+ nn = str2_line.lower().find( "vbat="  )
+ if (nn >= 0):
+  try:
+   ff = float( str2_line[nn+5:].split()[0] )
+  except ValueError:
+   nn = -1
+ if (nn >= 0):
+  file.write(    ( "<table:table-cell office:value-type=\"float\" office:value=\"%f\" calcext:value-type=\"float\"><text:p>%f</text:p></table:table-cell>"   %  (ff, ff)  )    )
+ else:
+  file.write(   "<table:table-cell/>"   )   # Not found any data -- empty cell
+ #
+ # Search for "VCCIO"
+ #
+ nn = str2_line.lower().find( "vccio="  )
+ if (nn >= 0):
+  try:
+   ff = float( str2_line[nn+6:].split()[0] )
+  except ValueError:
+   nn = -1
+ if (nn >= 0):
+  file.write(    ( "<table:table-cell office:value-type=\"float\" office:value=\"%f\" calcext:value-type=\"float\"><text:p>%f</text:p></table:table-cell>"   %  (ff, ff)  )    )
+ else:
+  file.write(   "<table:table-cell/>"   )   # Not found any data -- empty cell
+ #
+ # Search for "VCCCORE"
+ #
+ nn = str2_line.lower().find( "vcccore="  )
+ if (nn >= 0):
+  try:
+   ff = float( str2_line[nn+8:].split()[0] )
+  except ValueError:
+   nn = -1
+ if (nn >= 0):
+  file.write(    ( "<table:table-cell office:value-type=\"float\" office:value=\"%f\" calcext:value-type=\"float\"><text:p>%f</text:p></table:table-cell>"   %  (ff, ff)  )    )
+ else:
+  file.write(   "<table:table-cell/>"   )   # Not found any data -- empty cell
  file.write(    "\r\n"   )   # Important! 
  
 
@@ -432,9 +508,19 @@ with open( runningPath + "/log.txt", "a") as f9:
   ### Now write the tables                            ##
 
 
-  dest.write(   "<table:table-column table:style-name=\"co1\" table:number-columns-repeated=\"13\" table:default-cell-style-name=\"Default\"/><table:table-column table:style-name=\"co1\" table:number-columns-repeated=\"4\" table:default-cell-style-name=\"ce3\"/>"    )
+  dest.write(   "<table:table-column table:style-name=\"co1\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/><table:table-column table:style-name=\"co2\" table:default-cell-style-name=\"ce3\"/><table:table-column table:style-name=\"co1\" table:number-columns-repeated=\"10\" table:default-cell-style-name=\"Default\"/><table:table-column table:style-name=\"co2\" table:default-cell-style-name=\"Default\"/><table:table-column table:style-name=\"co1\" table:number-columns-repeated=\"3\" table:default-cell-style-name=\"Default\"/>"    )
   dest.write(   "<table:table-row table:style-name=\"ro1\">"   )
-  dest.write(   "<table:table-cell table:number-columns-repeated=\"13\"/><table:table-cell table:style-name=\"Default\" table:number-columns-repeated=\"4\"/>"   )
+  dest.write(   "<table:table-cell/>"   )
+  dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Row Number</text:p></table:table-cell>"   )
+  dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Date/Time</text:p></table:table-cell>"   )
+  dest.write(   "<table:table-cell/>"   )
+  dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Accelerometer device</text:p></table:table-cell>"   )
+  dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Trigger (g/16384)</text:p></table:table-cell>"   )
+  dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Sample frequency (Hz)</text:p></table:table-cell>"   )
+  dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Sample length</text:p></table:table-cell>"   )
+  dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Max acceleration (g/16384)</text:p></table:table-cell>"   )
+  dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Root-total-square acceleration (g/16384)</text:p></table:table-cell>"   )
+  dest.write(   "<table:table-cell table:number-columns-repeated=\"3\"/><table:table-cell table:style-name=\"Default\" table:number-columns-repeated=\"4\"/>"   )
   dest.write(   "</table:table-row>"    )
 
 
@@ -458,8 +544,8 @@ with open( runningPath + "/log.txt", "a") as f9:
     file_loc.write(   "<table:table-cell table:style-name=\"Default\" office:value-type=\"float\" office:value=\"%0.1f\" calcext:value-type=\"float\"><text:p>%0.1f</text:p></table:table-cell>"   %  (amplVal, amplVal)  )
    elif (i_loc == 3):
     file_loc.write(   "<table:table-cell table:formula=\"of:=INDEX([.$B$2:.$K$%d];[.$M$3]-1;1)\" office:value-type=\"float\" office:value=\"2\" calcext:value-type=\"float\"><text:p>2</text:p></table:table-cell>"    %  (list_len_loc+1)   )
-    file_loc.write(   "<table:table-cell table:style-name=\"ce1\" table:formula=\"of:=INDEX([.$B$2:.$K$%d];[.$M$3]-1;2)\" office:value-type=\"date\" office:date-value=\"2018-04-01\" calcext:value-type=\"date\"><text:p>01/04/2018</text:p></table:table-cell>"   %  (list_len_loc+1)   )
-    file_loc.write(   "<table:table-cell table:style-name=\"ce2\" table:formula=\"of:=INDEX([.$B$2:.$K$%d];[.$M$3]-1;3)\" office:value-type=\"time\" office:time-value=\"PT12H55M45S\" calcext:value-type=\"time\"><text:p>12:55:45</text:p></table:table-cell>"    %  (list_len_loc+1)   )
+    file_loc.write(   "<table:table-cell table:style-name=\"ce3\" table:formula=\"of:=INDEX([.$B$2:.$K$%d];[.$M$3]-1;2)\" office:value-type=\"date\" office:date-value=\"2018-04-01T12:55:45\" calcext:value-type=\"date\"><text:p>01/04/2018 12:55:45</text:p></table:table-cell>"   %  (list_len_loc+1)   )
+    file_loc.write(   "<table:table-cell/>"  )
     file_loc.write(   "<table:table-cell table:style-name=\"Default\" table:formula=\"of:=INDEX([.$B$2:.$K$%d];[.$M$3]-1;5)\" office:value-type=\"float\" office:value=\"80\" calcext:value-type=\"float\"><text:p>80</text:p></table:table-cell>"                  %  (list_len_loc+1)   )
     file_loc.write(   "<table:table-cell table:style-name=\"Default\" office:value-type=\"float\" office:value=\"%0.0f\" calcext:value-type=\"float\"><text:p>%0.0f</text:p></table:table-cell>" % (freqVal, freqVal)   )
    elif (i_loc == 4):
@@ -511,10 +597,19 @@ with open( runningPath + "/log.txt", "a") as f9:
   if bAddHeartbeatsTable():
    dest.write(    "<table:table table:name=\"Heartbeats\" table:style-name=\"ta1\">"   )
    dest.write(    "<table:table-column table:style-name=\"co1\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/>"   )
-   dest.write(    "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"ce7\"/>"   )
-   dest.write(    "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"ce2\"/>"   )
-   dest.write(    "<table:table-column table:style-name=\"co1\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/>"   )
-   dest.write(    "<table:table-row table:style-name=\"ro1\"><table:table-cell/><table:table-cell table:style-name=\"ce7\"/><table:table-cell table:style-name=\"Default\" table:number-columns-repeated=\"2\"/><table:table-cell table:number-columns-repeated=\"2\"/>"   )
+   dest.write(    "<table:table-column table:style-name=\"co2\" table:default-cell-style-name=\"ce3\"/>"   )
+   dest.write(    "<table:table-column table:style-name=\"co1\" table:number-columns-repeated=\"7\" table:default-cell-style-name=\"Default\"/>"   )
+   dest.write(    "<table:table-row table:style-name=\"ro1\">"  )
+   dest.write(       "<table:table-cell/>"     )
+   dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Row Number</text:p></table:table-cell>"    )
+   dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Date/Time</text:p></table:table-cell>"     )
+   dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Item</text:p></table:table-cell>"          )
+   dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>S</text:p></table:table-cell>"             )
+   dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Tacc (deg C)</text:p></table:table-cell>"  )
+   dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Tint (deg C)</text:p></table:table-cell>"  )
+   dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>Vbat (V)</text:p></table:table-cell>"      )
+   dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>VCCIO (V)</text:p></table:table-cell>"     )
+   dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>VCCCORE (V)</text:p></table:table-cell>"   )
    dest.write(    "</table:table-row>"   )
    f8 = open(  runningPath +  "/8", "r"  )   # Same file as before, reading back
    for f8_line in f8:

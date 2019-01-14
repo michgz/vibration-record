@@ -29,22 +29,22 @@ class ADXL355: public Accel
     };
 
   public:
-    void  init(void);
-    float readTemperature(void);
-    void  setFreq(int);// in Hz
-    void  enterStandby(void);
-    void  exitStandby(void);
-    const char * getName(void) {return deviceName;}
-    const float  scaleFactor(void) {return 1./256000.;}  // reading-to-g's conversion. This is only valid for the +-2g range!
-    float  getFrequency(void);
-    int    getTimerReload(void);
+    virtual void  init(void);
+    virtual float readTemperature(void);
+    virtual void  setFreq(int);// in Hz
+    virtual void  enterStandby(void);
+    virtual void  exitStandby(void);
+    virtual const char * getName(void) {return deviceName;}
+    virtual const float  scaleFactor(void) {return 1./256000.;}  // reading-to-g's conversion. This is only valid for the +-2g range!
+    virtual float  getFrequency(void);
+    virtual int    getTimerReload(void);
     //void   zapFifo(void);
-    void zapFifo(READING_CALLBACK_T cb);
+    virtual void zapFifo(READING_CALLBACK_T cb);
     
-    void   softwareReset(void) {;}  // no action
+    virtual void   softwareReset(void) {;}  // no action
 
-    bool   useLinearFifo(void) {return false;}
-    bool   getSingleReading(float xyz[3]);
+    virtual bool   useLinearFifo(void) {return false;}
+    virtual bool   getSingleReading(float xyz[3]);
 
 };
 

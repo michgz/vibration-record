@@ -21,6 +21,12 @@ static uint8_t bcd2bin (uint8_t val) {
 
 
 
+#define UNIQUE_SERIAL_NUMBER_0         (*((const uint32_t * const)0x0080A00C))
+#define UNIQUE_SERIAL_NUMBER_1         (*((const uint32_t * const)0x0080A040))
+#define UNIQUE_SERIAL_NUMBER_2         (*((const uint32_t * const)0x0080A044))
+#define UNIQUE_SERIAL_NUMBER_3         (*((const uint32_t * const)0x0080A048))
+
+
 
 static void get(void)
 {
@@ -250,6 +256,14 @@ bool DoRtcCLI(void)
 
   Serial.println(" >>>>> ENTERING RTC CLI >>>>>>>>>>>");
   Serial.println("  Supported commands: get, set, run");
+  Serial.println("");
+  Serial.print(UNIQUE_SERIAL_NUMBER_0, HEX);
+  Serial.print(" ");
+  Serial.print(UNIQUE_SERIAL_NUMBER_1, HEX);
+  Serial.print(" ");
+  Serial.print(UNIQUE_SERIAL_NUMBER_2, HEX);
+  Serial.print(" ");
+  Serial.println(UNIQUE_SERIAL_NUMBER_3, HEX);
 
 
   while (true)

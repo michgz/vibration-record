@@ -10,26 +10,26 @@
 class Accel
 {
   public:
-    void  init(void);
-    float readTemperature(void);
-    void  setFreq(int);// in Hz
-    void  enterStandby(void);
-    void  exitStandby(void);
-    const char * getName(void);
-    const float  scaleFactor(void);
-    float  getFrequency(void);
-    int    getTimerReload(void);
+    virtual void  init(void);
+    virtual float readTemperature(void);
+    virtual void  setFreq(int);// in Hz
+    virtual void  enterStandby(void);
+    virtual void  exitStandby(void);
+    virtual const char * getName(void);
+    virtual const float  scaleFactor(void);
+    virtual float  getFrequency(void);
+    virtual int    getTimerReload(void);
     //void   zapFifo(void);
 
-void zapFifo(READING_CALLBACK_T cb);
+virtual void zapFifo(READING_CALLBACK_T cb);
     
-    void   softwareReset(void);
+    virtual void   softwareReset(void);
 
     // Store into a linear FIFO as an intermediate to the circular. Should only
     // be needed if the hardware FIFO is not used (i.e. LSM6!)
-    bool   useLinearFifo(void);
+    virtual bool   useLinearFifo(void);
 
-    bool   getSingleReading(float xyz[3]);
+    virtual bool   getSingleReading(float xyz[3]);
 
 };
 

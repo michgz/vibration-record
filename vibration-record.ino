@@ -29,6 +29,8 @@
 #include "Rtc.h"
 #include "ConfigurationFile.h"
 #include "RtcCli.h"
+#include "Accel.h"
+#include "Board.h"
 
 
 
@@ -145,11 +147,13 @@ int intCount = 0;
 
 /* Define the singleton variable!   */
 #if defined LSM6
-  LSM6DS   theAccel;
+//  LSM6DS   theAccel;
 #endif
 #if defined ADXL
-  ADXL355  theAccel;
+  ADXL355  theAccelAdxl;
 #endif
+
+class Accel   * theAccel;
 
 AveragingBuffer avgs;
 
@@ -174,7 +178,7 @@ void addToCircBufferNoLinearFifo(READING_T xyz)
 
 bool configUSE_LINEAR_FIFO(void)
 {
-    return theAccel.useLinearFifo();
+    return theAccel->useLinearFifo();
 }
 
 
@@ -244,7 +248,7 @@ bool writeToLog(int what)
 
     if (what == 0 || what == 2)
     {
-      sprintf(c, "S=%s Tacc=%0.2f Tint=%0.2f Vbat=%0.3f VCCIO=%0.3f VCCCORE=%0.3f", theAccel.getName(), theAccel.readTemperature(), ReadTemperature(), ReadVBAT(), ReadVCCIO(), ReadVCCCORE());
+      sprintf(c, "S=%s Tacc=%0.2f Tint=%0.2f Vbat=%0.3f VCCIO=%0.3f VCCCORE=%0.3f", theAccel->getName(), theAccel->readTemperature(), ReadTemperature(), ReadVBAT(), ReadVCCIO(), ReadVCCCORE());
       dataFile.println(String(c));
       if (what == 2)
       {
@@ -261,7 +265,7 @@ bool writeToLog(int what)
     }
     else if (what == 1 && circ.IsFullSample())   // doesn't hurt to test this flag again
     {
-      sprintf(c, "S=%s C=%d F=%0.2f", theAccel.getName(), getTrigger(), theAccel.getFrequency());
+      sprintf(c, "S=%s C=%d F=%0.2f", theAccel->getName(), getTrigger(), theAccel->getFrequency());
       dataFile.println(String(c));
 
 
@@ -353,9 +357,9 @@ void EIC_Handler (void)
 
         float readings [3];
 
-        (void) theAccel.getSingleReading(readings);
+        (void) theAccel->getSingleReading(readings);
     
-        if (theAccel.useLinearFifo())
+        if (theAccel->useLinearFifo())
         {
             addToLinearFifo(readings);
 
@@ -501,7 +505,7 @@ void setup() {
         //}
         if (strcmp(c, "FREQ") == 0)
         {
-          theAccel.setFreq(String(d).toInt());
+          theAccel->setFreq(String(d).toInt());
         }
       }
       dataFile.close();
@@ -525,16 +529,28 @@ void setup() {
   initialiseRtc();
   displayRtc(use_serial);
 
-  Setup_TC4(theAccel.getTimerReload());
+
+  if (boardIsAdxl())
+  {
+    theAccel = &theAccelAdxl;
+  }
+  else
+  {
+    // Unknown device
+    theAccel = NULL;
+  }
+  
+
+  Setup_TC4(theAccel->getTimerReload());
 
   if (use_serial)
   {
     Serial.print("Using sampling frequency of : ");
-    Serial.print(theAccel.getFrequency(), DEC);
+    Serial.print(theAccel->getFrequency(), DEC);
     Serial.println(" Hz");
   }
 
-  theAccel.init();
+  theAccel->init();
 
   if (!cardDetectAvailable() || digitalRead(cardDetect))
   {
@@ -583,13 +599,13 @@ void loop() {
         // Disable the interrupts while we're accessing the linear FIFO
         NVIC_DisableIRQ(EIC_IRQn);
 
-        if (theAccel.useLinearFifo())
+        if (theAccel->useLinearFifo())
         {
             zapLinearFifo(&addToCircBuffer);
         }
         else
         {
-            theAccel.zapFifo(&addToCircBufferNoLinearFifo);
+            theAccel->zapFifo(&addToCircBufferNoLinearFifo);
         }
 
 
@@ -648,8 +664,8 @@ void loop() {
     {
       // Something has gone wrong with the accelerometer. Reset it.
 
-      theAccel.softwareReset();
-      theAccel.init();
+      theAccel->softwareReset();
+      theAccel->init();
       avgs.Init();
 
       circ.Init();
