@@ -476,6 +476,24 @@ void setup() {
 
   pinMode(9, INPUT);  // D9 = AIN7 (VBAT)
 
+
+  if (use_serial) Serial.println("");
+  if (use_serial) Serial.print("Device ID Register = ");
+  if (use_serial) Serial.println(DSU->DID.reg, HEX);  // Reads 0x10010305.
+  // (    SAMD32G18A, 256KB Flash, 32KB RAM, 48 pin package
+  //         Revision 3, Die 0, Cortex-M0+).
+
+
+  if (boardIsAdxl())
+  {
+      theAccel = &theAccelAdxl;
+  }
+  else
+  {
+      // Unknown device
+      theAccel = NULL;
+  }
+
   SD.begin(chipSelect);
 
   if (use_serial) Serial.println("Begin reading config...");
@@ -520,25 +538,8 @@ void setup() {
     //    SD.remove("setup.txt");
   }
 
-  if (use_serial) Serial.println("");
-  if (use_serial) Serial.print("Device ID Register = ");
-  if (use_serial) Serial.println(DSU->DID.reg, HEX);  // Reads 0x10010305.
-  // (    SAMD32G18A, 256KB Flash, 32KB RAM, 48 pin package
-  //         Revision 3, Die 0, Cortex-M0+).
-
   initialiseRtc();
   displayRtc(use_serial);
-
-
-  if (boardIsAdxl())
-  {
-    theAccel = &theAccelAdxl;
-  }
-  else
-  {
-    // Unknown device
-    theAccel = NULL;
-  }
   
 
   Setup_TC4(theAccel->getTimerReload());
