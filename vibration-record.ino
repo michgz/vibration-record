@@ -34,19 +34,13 @@
 
 
 
-// Should always be defined.
-#define USE_LINEAR_FIFO
+
 
 
 
 extern RTCZero rtc;
 
 
-/* Define to specify a system based on the LSM6DS3 accelerometer   */
-//#define LSM6
-
-/* Define to specify a system based on the ADXL355 accelerometer   */
-#define ADXL
 
 /* Define to allow the use of USB serial for debugging. If not attached to USB, it will be  *
    disabled automatically so can just leave defined in all cases.                           */
@@ -54,13 +48,6 @@ extern RTCZero rtc;
 #define USE_SERIAL
 
 
-#if (! defined LSM6) && (! defined ADXL)
-  #error "Need to define either LSM6 or ADXL"
-#endif
-
-#if (defined LSM6) && (defined ADXL)
-  #error "Need to define only one of LSM6 and ADXL"
-#endif
 
 // Green LED (Feather adalogger only)
 //const int LED_PIN = 8;
@@ -69,53 +56,27 @@ extern RTCZero rtc;
 const int LED_PIN = 13;
 
 
-#ifdef LSM6
-
-  // For Featherwing adalogger
-  const int chipSelect = 10;
   
-
-  
-  // Suitable for Feather adalogger only (Featherwing has no card detect!)
-  const int cardDetect = 7;
-
-  #define SAMPLE_SIZE_IMPL   (500)
-
-  // Use the EIC (GPIO edge trigger) interrupt to know when to take a reading.
-  #define USE_EIC_INTERRUPT
-  
-  #define USE_LINEAR_FIFO
-
-#endif
+// Suitable for Feather adalogger only (Featherwing has no card detect!)
+const int cardDetect = 7;
 
 
-#ifdef ADXL
-  
-  // For Feather adalogger
-  const int chipSelect = 4;
-  
 
-  
-  // Suitable for Feather adalogger only (Featherwing has no card detect!)
-  const int cardDetect = 7;
-
-  #define SAMPLE_SIZE_IMPL   (1000)
-
-  // Readings are kept in the accelerometer FIFO, read them out at timed intervals. No
-  //  need for EIC.
-  #undef  USE_EIC_INTERRUPT
-  
-  #undef  USE_LINEAR_FIFO
-
-#endif
 
 // Define to add debugging to every point in the circular buffer. Uses quite a lot of extra memory.
 #undef CIRC_BUFF_DEBUG
 
 
 
+// Should always be defined.
+#define USE_EIC_INTERRUPT
+#define USE_LINEAR_FIFO
 
 
+// 4 for Feather adalogger
+// 10 for Featherwing adalogger
+// Changed at the start of the program
+static int chipSelect = 4;
 
 
 
@@ -138,22 +99,23 @@ int intCount = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-/////////// ADXL355 FIFO reading  /////////////////////////////////////////////
+/////////// Accel  FIFO reading  /////////////////////////////////////////////
 
 #include "Accel.h"
 
 #include "AccelAdxl355.h"
+#include "AccelLsm6.h"
 #include "ProcessorSamd21.h"
 
-/* Define the singleton variable!   */
-#if defined LSM6
-//  LSM6DS   theAccel;
-#endif
-#if defined ADXL
-  ADXL355  theAccelAdxl;
-#endif
+/* Define the singleton variable! Two choices:   */
+
+LSM6DS   theAccelLsm6;
+ADXL355  theAccelAdxl;
+
 
 class Accel   * theAccel;
+
+
 
 AveragingBuffer avgs;
 
@@ -181,6 +143,11 @@ bool configUSE_LINEAR_FIFO(void)
     return theAccel->useLinearFifo();
 }
 
+bool configUSE_EIC_INTERRUPT(void)
+{
+    // Only used with linear FIFO
+    return theAccel->useLinearFifo();
+}
 
 
 static unsigned int accessesWithoutReadings = 0;
@@ -281,14 +248,14 @@ bool writeToLog(int what)
 #ifdef CIRC_BUFF_DEBUG
         else if ((buff[3] & 0xFFFF0000uL) == 0)
         {
-          // Include the extra information if it falls inside the 16-bit limits
-          sprintf(c, "%0.4f,%0.4f,%0.4f,%04X,%X", buff[0], buff[1], buff[2], buff[3], buff[4]);
+            // Include the extra information if it falls inside the 16-bit limits
+            sprintf(c, "%0.4f,%0.4f,%0.4f,%04X,%X", buff[0], buff[1], buff[2], buff[3], buff[4]);
         }
 #endif  // CIRC_BUFF_DEBUG
         else
         {
-          // No extra information
-          sprintf(c, "%0.4f,%0.4f,%0.4f", buff[0], buff[1], buff[2]);
+            // No extra information
+            sprintf(c, "%0.4f,%0.4f,%0.4f", buff[0], buff[1], buff[2]);
         }
         dataFile.println(String(c));
       }
@@ -301,7 +268,10 @@ bool writeToLog(int what)
   }
 
 #ifdef USE_EIC_INTERRUPT
-  NVIC_EnableIRQ(EIC_IRQn);
+  if (configUSE_EIC_INTERRUPT())
+  {
+      NVIC_EnableIRQ(EIC_IRQn);
+  }
 #endif
 
 }
@@ -490,9 +460,18 @@ void setup() {
   }
   else
   {
-      // Unknown device
-      theAccel = NULL;
+      theAccel = &theAccelLsm6;
   }
+
+  if (boardIsFeatherAdalogger())
+  {
+      chipSelect = 4;
+  }
+  else
+  {
+      chipSelect = 10;
+  }
+
 
   SD.begin(chipSelect);
 
@@ -573,8 +552,11 @@ void setup() {
   circ.Init();
 
 #if defined USE_EIC_INTERRUPT
-  NVIC_SetPriority(EIC_IRQn, 3);
-  enableInterrupt();
+  if (configUSE_EIC_INTERRUPT())
+  {
+      NVIC_SetPriority(EIC_IRQn, 3);
+      enableInterrupt();
+  }
 #endif
 
 }
@@ -627,20 +609,23 @@ void loop() {
         }
 
 #ifdef USE_EIC_INTERRUPT
-    /*
-    if (y == 0 && digitalRead(1))
-    {
-      // Kick-start
-      NVIC_SetPendingIRQ(EIC_IRQn);
-    }
-    */
-    NVIC_EnableIRQ(EIC_IRQn);
+        if (configUSE_EIC_INTERRUPT())
+        {
+            /*
+            if (y == 0 && digitalRead(1))
+            {
+              // Kick-start
+              NVIC_SetPendingIRQ(EIC_IRQn);
+            }
+            */
+        }
+        NVIC_EnableIRQ(EIC_IRQn);
 #endif  // USE_EIC_INTERRUPT
 
 
-  }
-  __DSB();
-  __ISB();
+    }
+    __DSB();
+    __ISB();
 
   if (heartbeatCheckDivisor >= 16)
   {
@@ -672,26 +657,29 @@ void loop() {
       circ.Init();
 
 #ifdef USE_LINEAR_FIFO
-      clearLinearFifo();
+      if (configUSE_LINEAR_FIFO())
+      {
+          clearLinearFifo();
+      }
 #endif
 
       writeToLog(3);
     }
   }
 
-  if (circ.IsFullSample())
-  {
-    // The circular buffer has been filled for us to zap out the data.
+    if (circ.IsFullSample())
+    {
+        // The circular buffer has been filled for us to zap out the data.
 
 
-    writeToLog(1);
+        writeToLog(1);
 
-    // Re-start buffering
+        // Re-start buffering
 
-    // We can ignore any interrupts that have occurred while we've been busy
-    gotTimeInterrupt = 0;
+        // We can ignore any interrupts that have occurred while we've been busy
+        gotTimeInterrupt = 0;
 
-  }
+    }
 
     if (!gotTimeInterrupt && !haveFullSample)
     {

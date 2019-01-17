@@ -177,18 +177,6 @@ void doSpiEnd(void)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 void ADXL355::setFreq(int f)
 {
   int i;

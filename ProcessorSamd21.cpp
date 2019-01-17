@@ -256,5 +256,5 @@ void TC4_Handler(void)
   TC4->COUNT16.INTFLAG.reg |= 0x3B;  // Clear the flags
   NVIC_ClearPendingIRQ(TC4_IRQn);
 
-  
+
 }

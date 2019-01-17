@@ -125,5 +125,5 @@ void AveragingBuffer::Add(float data[3])
 
     sum[0] += data[0]; sum[1] += data[1]; sum[2] += data[2];
     pointer ++;   
-  
+
 }

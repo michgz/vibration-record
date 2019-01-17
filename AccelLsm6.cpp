@@ -290,6 +290,20 @@ void LSM6DS::zapFifo(READING_CALLBACK_T cb)
 
 }
 
+static float U16_TO_FLOAT(uint16_t u)
+{
+    if ((u & 0x8000) != 0)
+    {
+        return (1.0 * (float)u) - 65536.0;
+    }
+    else
+    {
+        return (1.0 * (float)u);
+    }
+
+}
+
+
 bool LSM6DS::getSingleReading(float xyz[3])
 {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE3));
@@ -311,15 +325,10 @@ bool LSM6DS::getSingleReading(float xyz[3])
     delayMicroseconds(5);
     digitalWrite(LsmCsPin_, HIGH);
 
-    xyz[0] = 256.0 * (float)x;
-    xyz[1] = 256.0 * (float)y;
-    xyz[2] = 256.0 * (float)z;
+    xyz[0] = U16_TO_FLOAT(x);
+    xyz[1] = U16_TO_FLOAT(y);
+    xyz[2] = U16_TO_FLOAT(z);
 
     return true;
 }
-
-
-
-
-
 

@@ -1,4 +1,8 @@
 
+#ifndef __H_ACCEL_LSM6
+#define __H_ACCEL_LSM6
+
+
 #include "Accel.h"
 
 
@@ -9,23 +13,21 @@ class LSM6DS: public Accel
     char deviceName [7] = "LSM6DS";
 
   public:
-    void  init(void);
-    float readTemperature(void);
-    void  setFreq(int);// in Hz
-    void  enterStandby(void) {} // unimplemented
-    void  exitStandby(void)  {} // unimplemented
-    const char * getName(void) {return deviceName;}
-    const float  scaleFactor(void) {return 1./16383.;}  // reading-to-g's conversion. This is only valid for the +-2g range!
-    float  getFrequency(void);
-    int    getTimerReload(void);
-    //void   zapFifo(void);
-
-void zapFifo(READING_CALLBACK_T cb);
+    virtual void   init(void);
+    virtual float  readTemperature(void);
+    virtual void   setFreq(int);// in Hz
+    virtual void   enterStandby(void) {} // unimplemented
+    virtual void   exitStandby(void)  {} // unimplemented
+    virtual const char * getName(void) {return deviceName;}
+    virtual const float  scaleFactor(void) {return 1./16383.;}  // reading-to-g's conversion. This is only valid for the +-2g range!
+    virtual float  getFrequency(void);
+    virtual int    getTimerReload(void);
+    virtual void   zapFifo(READING_CALLBACK_T cb);
     
-    void   softwareReset(void);
+    virtual void   softwareReset(void);
 
-    bool   useLinearFifo(void) {return false;}
-    bool   getSingleReading(float xyz[3]);
+    virtual bool   useLinearFifo(void) {return true;}
+    virtual bool   getSingleReading(float xyz[3]);
 
 };
 
@@ -34,4 +36,5 @@ extern const int LsmCsPin_;
 
 extern const int LsmIntPin_;
 
+#endif   // __H_ACCEL_LSM6
 
