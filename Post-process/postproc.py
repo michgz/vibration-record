@@ -229,33 +229,51 @@ with open( runningPath + "/log.txt", "a") as f9:
  f9.write( datetime.datetime.now().strftime("Date: %d/%m/%Y %H:%M:%S\r") )
  f9.write( "Output directory: %s\r" % runningPath)
 
- if len(sys.argv) != 2:
-  f9.write( "ERROR: %d input arguments, expected 2. Terminating\r" % len(sys.argv) )
+ if len(sys.argv) < 2:
+  f9.write( "ERROR: %d input arguments, expected at least 2. Terminating\r" % len(sys.argv) )
   sys.exit(0)
 
  thePath = sys.argv[1]
 
- if not os.path.isabs(thePath):
-  # Turn a relative path into an absolute one
-  thePath = os.getcwd() + "/" + sys.argv[1]
-
- f9.write( "Input path: %s\r" % thePath )
+ f9.write( "First input parameter: %s\r" % thePath )
 
  if not os.path.exists(thePath):
   f9.write( "ERROR: Input path doesn't exist. Terminating\r")
   sys.exit(0)
 
- if not os.path.isdir(thePath):
-  f9.write( "ERROR: Input path is not a directory. Terminating\r")
-  sys.exit(0)
+ if os.path.isdir(thePath):
+  # It's a directory. Use it as the directory for input files, and its
+  # parent for output
 
- if not os.path.basename(thePath):
-  thePath = os.path.dirname(thePath)  # remove final "/" if needed
+  if not os.path.isabs(thePath):
+   # Turn a relative path into an absolute one
+   thePath = os.getcwd() + "/" + sys.argv[1]
 
- if bIncludeTraces():
-  theName = os.path.dirname(thePath) + "/" + os.path.basename(thePath) + "_" + datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
+  if not os.path.basename(thePath):
+   thePath = os.path.dirname(thePath)  # remove final "/" if needed
+
+  if bIncludeTraces():
+   theName = os.path.dirname(thePath) + "/" + os.path.basename(thePath) + "_" + datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
+  else:
+   theName = os.path.dirname(thePath) + "/" + os.path.basename(thePath) + "_Short_" + datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
+
+  inputFiles = sorted([y for y in os.listdir(thePath) if y.endswith('.CSV')])
+
  else:
-  theName = os.path.dirname(thePath) + "/" + os.path.basename(thePath) + "_Short_" + datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
+  # It's a file. Use its parent as both the directory for input files
+  # and for output files.
+  if not os.path.isabs(thePath):
+   thePath = os.getcwd() + "/" + os.path.dirname(thePath)
+  else:
+   thePath = os.path.dirname(thePath)
+  
+  if bIncludeTraces():
+   theName = thePath + "/" +            datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
+  else:
+   theName = thePath + "/" + "Short_" + datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
+
+  inputFiles = sorted([y for y in sys.argv[1:] if y.endswith('.CSV')])
+
 
  f9.write( "Outputting to file: %s\r" % theName )
 
@@ -273,8 +291,6 @@ with open( runningPath + "/log.txt", "a") as f9:
   os.remove(   runningPath +  "/template_content/7")
  except:
   pass
-
-
 
 
 
@@ -346,7 +362,7 @@ with open( runningPath + "/log.txt", "a") as f9:
    return (line_number < 1048576)
 
   excluded = False
-  for x in sorted([y for y in os.listdir(thePath) if y.endswith('.CSV')]):
+  for x in inputFiles:
    f9.write( "Processing input file: %s\r" % x )
    with open(thePath + '/' + x, 'r') as f1:
     for line in f1:
