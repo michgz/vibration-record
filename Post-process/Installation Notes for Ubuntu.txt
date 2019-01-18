@@ -16,12 +16,27 @@ in the following way:
     :
     :
 <action>
-        <icon>ooo-calc</icon>
-        <name>Vibration post-process</name>
-        <unique-id>147740595582654-2</unique-id>
-        <command>python /the/path/to/the/script/Post-process/postproc.py %f</command>
-        <description>Send to vibration analysis program</description>
-        <patterns>*</patterns>
-        <directories/>
+	<icon>ooo-calc</icon>
+	<name>Process Vib</name>
+	<unique-id>1477740595582654-2</unique-id>
+	<command>python ~/Arduino/Sketches/Working/vibration-record/Post-process/postproc.py %f</command>
+	<description>Send to vibration analysis python program</description>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon>ooo-calc</icon>
+	<name>Process Vib</name>
+	<unique-id>1477740595582654-2</unique-id>
+	<command>python ~/Arduino/Sketches/Working/vibration-record/Post-process/postproc.py %F</command>
+	<description>Send to vibration analysis python program</description>
+	<patterns>*.CSV</patterns>
+	<text-files/>
+	<other-files/>
 </action>
 </actions>
+
+
+The result of this change is to allow a right-click context menu on either of the following selections:
+  *  A single directory (presumably with multiple .CSV files inside it), or
+  *  Multiple .CSV files within the same directory
