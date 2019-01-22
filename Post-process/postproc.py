@@ -99,7 +99,7 @@ def MidOfTrace(file, device_type):
  else:
   file.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>LSM6</text:p></table:table-cell>"   )
   this_freq = 104
- file.write(   "<table:table-cell office:value-type=\"float\" office:value=\"80\" calcext:value-type=\"float\"><text:p>80</text:p></table:table-cell>"   )
+ file.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>" % (currentTriggerVal, currentTriggerVal)   )
  file.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>" % (this_freq, this_freq)  )
 
 def FlushPreviousTrace(file, prev_trace):
@@ -233,6 +233,8 @@ with open( runningPath + "/log.txt", "a") as f9:
   f9.write( "ERROR: %d input arguments, expected at least 2. Terminating\r" % len(sys.argv) )
   sys.exit(0)
 
+
+ # Determine the output path and output file name based on the first argument.
  thePath = sys.argv[1]
 
  f9.write( "First input parameter: %s\r" % thePath )
@@ -242,42 +244,44 @@ with open( runningPath + "/log.txt", "a") as f9:
   sys.exit(0)
 
  if os.path.isdir(thePath):
-  # It's a directory. Use it as the directory for input files, and its
-  # parent for output
+  # It's a directory. Use its parent for output
 
-  if not os.path.isabs(thePath):
-   # Turn a relative path into an absolute one
-   thePath = os.getcwd() + "/" + sys.argv[1]
-
-  if not os.path.basename(thePath):
-   thePath = os.path.dirname(thePath)  # remove final "/" if needed
+  thePath = os.path.abspath(thePath)
 
   if bIncludeTraces():
-   theName = os.path.dirname(thePath) + "/" + os.path.basename(thePath) + "_" + datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
+   theName = os.path.dirname(thePath) + "/" + os.path.basename(thePath) +       "_" + datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
   else:
    theName = os.path.dirname(thePath) + "/" + os.path.basename(thePath) + "_Short_" + datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
-
-  inputFiles = sorted([y for y in os.listdir(thePath) if y.endswith('.CSV')])
 
  else:
   # It's a file. Use its parent as both the directory for input files
   # and for output files.
-  if not os.path.isabs(thePath):
-   thePath = os.getcwd() + "/" + os.path.dirname(thePath)
-  else:
-   thePath = os.path.dirname(thePath)
-  
-  if bIncludeTraces():
-   theName = thePath + "/" +            datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
-  else:
-   theName = thePath + "/" + "Short_" + datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
 
-  inputFiles = sorted([y for y in sys.argv[1:] if y.endswith('.CSV')])
+  thePath = os.path.abspath(thePath)
+
+  if bIncludeTraces():
+   theName = os.path.dirname(thePath) + "/" +            datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
+  else:
+   theName = os.path.dirname(thePath) + "/" + "Short_" + datetime.datetime.now().strftime("%y%m%d_%H%M%S") + ".ods"
 
 
  f9.write( "Outputting to file: %s\r" % theName )
 
- # If we get here, we have a reasonable directory to process
+
+ # Go through all inputs adding on the found CSV files
+
+ inputFiles = []
+
+ for z in sys.argv[1:]:
+  if os.path.isdir(z):
+   inputFilesBare = sorted([y for y in os.listdir(z) if y.upper().endswith('.CSV')])
+   for u in inputFilesBare:
+    inputFiles.append(os.path.join(os.path.abspath(z), u))
+  else:
+   if z.upper().endswith('.CSV'):
+    inputFiles.append(os.path.abspath(z))
+  
+
 
 
 
@@ -302,22 +306,31 @@ with open( runningPath + "/log.txt", "a") as f9:
  ###  file, if it exists.                             ##
 
  exclude = []
- try:
-  with open(thePath + '/Exclude.txt', 'r') as f3:
-   for line in f3:
-    # recognises ranges like "96-98"
-    if ('-' in line):
-     d = line.split('-')
-     if (len(d) >= 2):
-      exclude += range(int(d[0]), int(d[1])+1)
-    else:
-     try:
-      exclude.append(int(line))
-     except ValueError:
-      d = [0,0]
-   f9.write( "Found \"Exclude.txt\", excluding %d traces.\r" % len(exclude)  )
- except IOError:
-  exclude = []
+
+ # This is really a legacy functionality. Only use it if there is
+ # a single input, and that input is a directory. Otherwise skip this.
+ #
+ if len(sys.argv)==2 and os.path.isdir(sys.argv[1]):
+  try:
+   inputPath = sys.argv[1]
+   if not os.path.isabs(inputPath):
+    # Turn a relative path into an absolute one
+    inputPath = os.getcwd() + "/" + inputPath
+   with open(thePath + '/Exclude.txt', 'r') as f3:
+    for line in f3:
+     # recognises ranges like "96-98"
+     if ('-' in line):
+      d = line.split('-')
+      if (len(d) >= 2):
+       exclude += range(int(d[0]), int(d[1])+1)
+     else:
+      try:
+       exclude.append(int(line))
+      except ValueError:
+       d = [0,0]
+    f9.write( "Found \"Exclude.txt\", excluding %d traces.\r" % len(exclude)  )
+  except IOError:
+   exclude = []
 
 
 
@@ -364,7 +377,7 @@ with open( runningPath + "/log.txt", "a") as f9:
   excluded = False
   for x in inputFiles:
    f9.write( "Processing input file: %s\r" % x )
-   with open(thePath + '/' + x, 'r') as f1:
+   with open(x, 'r') as f1:
     for line in f1:
      if bIncludeTraces() and bIsLineNumberOkay():
       dest.write(      "<table:table-row table:style-name=\"ro1\">"    )
@@ -423,6 +436,10 @@ with open( runningPath + "/log.txt", "a") as f9:
        if bIncludeTraces() and bIsLineNumberOkay():
         dest.write(      "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % (line.split(',')[0])   )
         dest.write(      "<table:table-cell table:number-columns-repeated=\"2\"/>"     )
+       try:
+        currentTriggerVal = float(line[line.find("C=")+2:].split(' ')[0])
+       except ValueError:
+        currentTriggerVal = -1.
        current_header_line = line.strip()  # Only used if next line is "HEARTBEAT"
        the_row += 1
       elif (a==2) and (line.find("HEARTBEAT") >= 0):
