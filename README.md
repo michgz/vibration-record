@@ -4,6 +4,8 @@ Records short (5 second - 20 second) vibration patterns as measured by an accele
 
 Uses the Arduino IDE and the SAMD21 processor.
 
+Also has post-processing software based on Python 2.7.
+
 ## Reference hardware
 
 * EITHER, Option 1: 
