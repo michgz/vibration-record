@@ -9,8 +9,14 @@ import shutil
 
 
 
-runningPath = os.path.dirname(os.path.abspath(__file__))
+def ODSDate(dt):
+ return dt.strftime("<table:table-cell table:style-name=\"ce3\" office:value-type=\"date\" office:date-value=\"%Y-%m-%dT%H:%M:%S\" calcext:value-type=\"date\"><text:p>%d/%m/%Y %H:%M:%S</text:p></table:table-cell>")
 
+
+
+
+runningPath = os.path.dirname(os.path.abspath(__file__))
+print "X"
 
 
 adxl = []
@@ -83,6 +89,8 @@ print adxl_idx
 
 
 
+
+
 theName = os.path.join(runningPath, '1.ods')
 
 
@@ -106,9 +114,22 @@ if True:
 
   dest.write(       "<office:body><office:spreadsheet><table:calculation-settings table:automatic-find-labels=\"false\"/>"     )
   dest.write(       "<table:table table:name=\"Data\" table:style-name=\"ta\">"      )
-  dest.write(       "<table:table-row table:style-name=\"ro1\">"    )
-  dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % ("Hello!")   )
-  dest.write(       "</table:table-row>"     )
+  
+  
+  for i1 in range(0,len(adxl_idx)):
+
+   if (adxl_idx[i1] >= 0):
+    dest.write(       "<table:table-row table:style-name=\"ro1\">"    )
+    dest.write(   ODSDate(adxl[i1][0])  )
+    f3 = adxl[i1][2]
+    dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"    %  (f3, f3)   )
+    dest.write("<table:table-cell/>")
+    dest.write(   ODSDate(lsm6[adxl_idx[i1]][0])  )
+    f3 = lsm6[adxl_idx[i1]][2]
+    dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"    %  (f3, f3)   )
+    dest.write("<table:table-cell/>")
+    #dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % ("Hello!")   )
+    dest.write(       "</table:table-row>"     )
   dest.write(       "</table:table>"     )
   dest.write(       "</office:spreadsheet></office:body></office:document-content>" )
 
