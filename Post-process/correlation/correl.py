@@ -43,14 +43,14 @@ with open(os.path.join(runningPath,'LSM6.csv'),'r') as f1:
 #
 # This was determined manually. Next big challenge: do it automatically!!
 #
-time_diff = datetime.timedelta(seconds=-389)
+time_diff = datetime.timedelta(seconds=-467)
 
 
 
 
 # The furtherest two times can be and still count as the same
 #
-epsilon = datetime.timedelta(seconds=30)
+epsilon = datetime.timedelta(seconds=15)
 
 
 
