@@ -78,14 +78,12 @@ for a1 in adxl:
    best_diff = abs(diff)
    best_idx = a2_idx
   a2_idx += 1
- if (best_diff < epsilon):
+ if (best_diff < epsilon) and (lsm6_idx[best_idx] == -1):
   adxl_idx[a1_idx] = best_idx
   lsm6_idx[best_idx] = a1_idx
  a1_idx += 1
  
 
-
-print adxl_idx
 
 
 
@@ -121,15 +119,73 @@ if True:
    if (adxl_idx[i1] >= 0):
     dest.write(       "<table:table-row table:style-name=\"ro1\">"    )
     dest.write(   ODSDate(adxl[i1][0])  )
+    f3 = adxl[i1][1]
+    dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"    %  (f3, f3)   )
     f3 = adxl[i1][2]
     dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"    %  (f3, f3)   )
     dest.write("<table:table-cell/>")
     dest.write(   ODSDate(lsm6[adxl_idx[i1]][0])  )
+    f3 = lsm6[adxl_idx[i1]][1]
+    dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"    %  (f3, f3)   )
     f3 = lsm6[adxl_idx[i1]][2]
     dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"    %  (f3, f3)   )
     dest.write("<table:table-cell/>")
     #dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % ("Hello!")   )
     dest.write(       "</table:table-row>"     )
+
+  # Write empty row
+  dest.write(       "<table:table-row table:style-name=\"ro1\"><table:table-cell/><table:table-cell/><table:table-cell/><table:table-cell/><table:table-cell/><table:table-cell/><table:table-cell/></table:table-row>"    )
+
+  dest.write(       "<table:table-row table:style-name=\"ro1\">"   )
+  dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % ("Unmatched:")   )
+  dest.write(       "<table:table-cell/><table:table-cell/><table:table-cell/>"             )
+  dest.write(       "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % ("Unmatched:")   )
+  dest.write(       "<table:table-cell/><table:table-cell/>"             )
+  dest.write(       "</table:table-row>"     )
+
+
+  # Now write out the remaining values (that haven't been paired).
+
+  i1 = 0
+  i2 = 0
+  while(True):
+   while(i1 < len(adxl_idx)):
+    if (adxl_idx[i1] != -1):
+     i1 += 1
+    else:
+     break
+   while(i2 < len(lsm6_idx)):
+    if (lsm6_idx[i2] != -1):
+     i2 += 1
+    else:
+     break
+   if(i1 >= len(adxl_idx)) and (i2 >= len(lsm6_idx)):
+    # Finished!
+    break
+   else:
+    # Something still to do!
+    dest.write(       "<table:table-row table:style-name=\"ro1\">"    )
+    if(i1 < len(adxl_idx)):
+     dest.write(   ODSDate(adxl[i1][0])  )
+     f3 = adxl[i1][1]
+     dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"    %  (f3, f3)   )
+     f3 = adxl[i1][2]
+     dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"    %  (f3, f3)   )
+     i1 += 1
+    else:
+     dest.write(       "<table:table-cell/><table:table-cell/><table:table-cell/>"             )
+    dest.write(        "<table:table-cell/>"             )
+    if(i2 < len(lsm6_idx)):
+     dest.write(   ODSDate(lsm6[i2][0])  )
+     f3 = lsm6[i2][1]
+     dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"    %  (f3, f3)   )
+     f3 = lsm6[i2][2]
+     dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"    %  (f3, f3)   )
+     i2 += 1
+    else:
+     dest.write(       "<table:table-cell/><table:table-cell/><table:table-cell/>"             )
+    dest.write(       "</table:table-row>"     )
+
   dest.write(       "</table:table>"     )
   dest.write(       "</office:spreadsheet></office:body></office:document-content>" )
 
