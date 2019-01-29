@@ -97,6 +97,82 @@ if True:
  # Now output to a file
 
 
+ i3 = 0
+ for i1 in range(0,len(adxl_idx)):
+  if (adxl_idx[i1] >= 0):
+   i3 += 1
+ noRows = i3 - 1
+
+ with open(   runningPath + "/content_local_obj1.xml", "w") as dest:
+  with open(    runningPath +  "/6_2.xml", "r") as source:
+   while True:
+    copy_buff = source.read(4096)
+    if not copy_buff:
+     break
+    dest.write(copy_buff)
+
+    
+  dest.write(    "<table:table-rows>"  )
+
+  for i1 in range(0,len(adxl_idx)):
+
+   if (adxl_idx[i1] >= 0):
+    i3 += 1
+    dest.write(       "<table:table-row>"    )
+    dest.write(       "<table:table-cell office:value-type=\"string\"><text:p>%d</text:p></table:table-cell>"   % i3)
+    f3 = adxl[i1][1]
+    dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\"><text:p>%0.3f</text:p>"   % (f3, f3)   )
+    if (i3 ==1 ):
+     dest.write(   "<draw:g><svg:desc>Data.C1:Data.C%d</svg:desc></draw:g>"   % noRows   )
+    dest.write(   "</table:table-cell>"   )
+    f3 = lsm6[adxl_idx[i1]][1]
+    dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\"><text:p>%0.3f</text:p>"   % (f3, f3)   )
+    if (i3 ==1 ):
+     dest.write(   "<draw:g><svg:desc>Data.G1:Data.G%d</svg:desc></draw:g>"   % noRows   )
+    dest.write(    "</table:table-cell>"    )
+    dest.write(       "</table:table-row>"     )
+
+  dest.write(   "</table:table-rows></table:table></chart:chart></office:chart></office:body></office:document-content>"   )
+
+
+
+ with open(   runningPath + "/content_local_obj2.xml", "w") as dest:
+  with open(    runningPath +  "/7_2.xml", "r") as source:
+   while True:
+    copy_buff = source.read(4096)
+    if not copy_buff:
+     break
+    dest.write(copy_buff)
+
+    
+  dest.write(    "<table:table-rows>"  )
+  i4 = 0
+  for i1 in range(0,len(adxl_idx)):
+
+   if (adxl_idx[i1] >= 0):
+    i4 += 1
+    dest.write(       "<table:table-row>"    )
+    dest.write(       "<table:table-cell office:value-type=\"string\"><text:p>%d</text:p></table:table-cell>"   % i4)
+    f3 = adxl[i1][2]
+    dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\"><text:p>%0.3f</text:p>"   % (f3, f3)   )
+    if (i4 ==1 ):
+     dest.write(   "<draw:g><svg:desc>Data.B1:Data.B%d</svg:desc></draw:g>"   % noRows   )
+    dest.write(   "</table:table-cell>"   )
+    f3 = lsm6[adxl_idx[i1]][2]
+    dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\"><text:p>%0.3f</text:p>"   % (f3, f3)   )
+    if (i4 ==1 ):
+     dest.write(   "<draw:g><svg:desc>Data.F1:Data.F%d</svg:desc></draw:g>"   % noRows   )
+    dest.write(    "</table:table-cell>"    )
+    dest.write(       "</table:table-row>"     )
+
+  dest.write(   "</table:table-rows></table:table></chart:chart></office:chart></office:body></office:document-content>"   )
+
+
+
+
+
+
+
  ######################################################
  ###  Write Header copperplate to the contents file  ##
 
@@ -110,10 +186,33 @@ if True:
 
 
 
-  #dest.write(       "<office:body><office:spreadsheet><table:calculation-settings table:automatic-find-labels=\"false\"/>"     )
-  #dest.write(       "<table:table table:name=\"Data\" table:style-name=\"ta\">"      )
-  
-  
+
+
+  dest.write(       "<office:body>"    )
+  dest.write(       "<office:spreadsheet>"    )
+  dest.write(       "<table:calculation-settings table:automatic-find-labels=\"false\"/>"    )
+  dest.write(       "<table:table table:name=\"Data\" table:style-name=\"ta1\">"    )
+  dest.write(       "<table:shapes>"    )
+  dest.write(       "<draw:frame draw:z-index=\"0\" draw:style-name=\"gr1\" draw:text-style-name=\"P1\" svg:width=\"251.69mm\" svg:height=\"142.94mm\" svg:x=\"223.06mm\" svg:y=\"7.17mm\">"    )
+  dest.write(       "<draw:object draw:notify-on-update-of-ranges=\"Data.C1:Data.C%d Data.G1:Data.G%d\" xlink:href=\"./Object 1\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\">"  %  (noRows, noRows)  )
+  dest.write(       "<loext:p/>"    )
+  dest.write(       "</draw:object>"    )
+  dest.write(       "<draw:image xlink:href=\"./ObjectReplacements/Object 1\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"/>"    )
+  dest.write(       "</draw:frame>"    )
+  dest.write(       "<draw:frame draw:z-index=\"1\" draw:style-name=\"gr1\" draw:text-style-name=\"P1\" svg:width=\"251.69mm\" svg:height=\"142.94mm\" svg:x=\"409.83mm\" svg:y=\"79.95mm\">"    )
+  dest.write(       "<draw:object draw:notify-on-update-of-ranges=\"Data.B1:Data.B%d Data.F1:Data.F%d\" xlink:href=\"./Object 2\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\">" % (noRows, noRows)   )
+  dest.write(       "<loext:p/>"    )
+  dest.write(       "</draw:object>"    )
+  dest.write(       "<draw:image xlink:href=\"./ObjectReplacements/Object 2\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"/>"    )
+  dest.write(       "</draw:frame>"    )
+  dest.write(       "</table:shapes>"    )
+  dest.write(       "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"ce3\"/>"    )
+  dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"3\" table:default-cell-style-name=\"Default\"/>"    )
+  dest.write(       "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"Default\"/>"    )
+  dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/>"    )
+
+
+ 
   for i1 in range(0,len(adxl_idx)):
 
    if (adxl_idx[i1] >= 0):
@@ -194,6 +293,11 @@ if True:
  shutil.copy2(  runningPath + "/5_1.ods", theName)
  with zipfile.ZipFile(theName, "a") as z:
   z.write(  runningPath +  "/content_local.xml", "content.xml", zipfile.ZIP_DEFLATED )
+  z.write(  runningPath +  "/content_local_obj1.xml", "Object 1/content.xml", zipfile.ZIP_DEFLATED )
+  z.write(  runningPath +  "/content_local_obj2.xml", "Object 2/content.xml", zipfile.ZIP_DEFLATED )
   z.close()
 
- os.remove(  runningPath +  "/content_local.xml")
+ os.remove(  runningPath +  "/content_local.xml"  )
+ os.remove(  runningPath +  "/content_local_obj1.xml"  )
+ os.remove(  runningPath +  "/content_local_obj2.xml"  )
+ 
