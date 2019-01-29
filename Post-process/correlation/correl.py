@@ -191,7 +191,7 @@ if True:
 
 
  ##### Now write to the ZIP archive  ####
- shutil.copy2(  runningPath + "/../template_content/3_1.ods", theName)
+ shutil.copy2(  runningPath + "/5_1.ods", theName)
  with zipfile.ZipFile(theName, "a") as z:
   z.write(  runningPath +  "/content_local.xml", "content.xml", zipfile.ZIP_DEFLATED )
   z.close()
