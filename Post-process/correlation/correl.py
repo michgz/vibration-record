@@ -101,7 +101,7 @@ if True:
  ###  Write Header copperplate to the contents file  ##
 
  with open(    runningPath +  "/content_local.xml", "w") as dest:
-  with open(    runningPath +  "/../template_content/1", "r") as source:
+  with open(    runningPath +  "/../template_content/3.xml", "r") as source:
    while True:
     copy_buff = source.read(4096)
     if not copy_buff:
@@ -110,8 +110,8 @@ if True:
 
 
 
-  dest.write(       "<office:body><office:spreadsheet><table:calculation-settings table:automatic-find-labels=\"false\"/>"     )
-  dest.write(       "<table:table table:name=\"Data\" table:style-name=\"ta\">"      )
+  #dest.write(       "<office:body><office:spreadsheet><table:calculation-settings table:automatic-find-labels=\"false\"/>"     )
+  #dest.write(       "<table:table table:name=\"Data\" table:style-name=\"ta\">"      )
   
   
   for i1 in range(0,len(adxl_idx)):
