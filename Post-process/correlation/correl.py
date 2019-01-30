@@ -113,6 +113,8 @@ def correl(infile1, infile2, output, diff = -467.0):
        i3 += 1
      noRows = i3 - 1
 
+     print "noRows = %d" % noRows
+
      with open(   runningPath + "/content_local_obj1.xml", "w") as dest:
       with open(    runningPath +  "/6_2.xml", "r") as source:
        while True:
@@ -121,7 +123,36 @@ def correl(infile1, infile2, output, diff = -467.0):
          break
         dest.write(copy_buff)
 
-        
+
+      dest.write(    "<office:body>"  )
+      dest.write(    "<office:chart>"  )
+      dest.write(    "<chart:chart svg:width=\"25.17cm\" svg:height=\"14.295cm\" xlink:href=\"..\" xlink:type=\"simple\" chart:class=\"chart:scatter\" chart:style-name=\"ch1\">"  )
+      dest.write(    "<chart:plot-area chart:style-name=\"ch2\" table:cell-range-address=\"Data.C1:Data.C%d Data.G1:Data.G%d\" svg:x=\"0.503cm\" svg:y=\"0.285cm\" svg:width=\"24.164cm\" svg:height=\"13.725cm\">"   %  (noRows, noRows)      )
+
+      dest.write(    "<chartooo:coordinate-region svg:x=\"1.31cm\" svg:y=\"0.484cm\" svg:width=\"23.077cm\" svg:height=\"12.879cm\"/><chart:axis chart:dimension=\"x\" chart:name=\"primary-x\" chart:style-name=\"ch3\"/>"    )
+
+      dest.write(    "<chart:axis chart:dimension=\"y\" chart:name=\"primary-y\" chart:style-name=\"ch3\"><chart:grid chart:style-name=\"ch4\" chart:class=\"major\"/></chart:axis>"  )
+      dest.write(    "<chart:series chart:style-name=\"ch5\" chart:values-cell-range-address=\"Data.G1:Data.G%d\" chart:class=\"chart:scatter\">"   %  noRows  )
+      dest.write(    "<chart:domain table:cell-range-address=\"Data.C1:Data.C%d\"/><chart:data-point chart:repeated=\"%d\"/>"   % (noRows, noRows)  )
+      dest.write(    "</chart:series>"  )
+      
+      dest.write(    "<chart:wall chart:style-name=\"ch6\"/><chart:floor chart:style-name=\"ch7\"/></chart:plot-area><table:table table:name=\"local-table\"><table:table-header-columns><table:table-column/>"  )
+      dest.write(    "</table:table-header-columns>"  )
+
+
+      dest.write(    "<table:table-columns><table:table-column table:number-columns-repeated=\"2\"/></table:table-columns>"  )
+
+      dest.write(    "<table:table-header-rows>"  )
+      dest.write(    "<table:table-row>"  )
+      dest.write(    "<table:table-cell><text:p/></table:table-cell>"  )
+      dest.write(    "<table:table-cell office:value-type=\"string\"><text:p>Column C</text:p></table:table-cell><table:table-cell office:value-type=\"string\"><text:p>Column G</text:p></table:table-cell>"  )
+      dest.write(    "</table:table-row>"  )
+      dest.write(    "</table:table-header-rows>"  )
+
+
+
+
+
       dest.write(    "<table:table-rows>"  )
 
       for i1 in range(0,len(adxl_idx)):
@@ -154,7 +185,37 @@ def correl(infile1, infile2, output, diff = -467.0):
          break
         dest.write(copy_buff)
 
-        
+
+      dest.write(    "<office:body>"  )
+      dest.write(    "<office:chart>"  )
+      dest.write(    "<chart:chart svg:width=\"25.17cm\" svg:height=\"14.295cm\" xlink:href=\"..\" xlink:type=\"simple\" chart:class=\"chart:scatter\" chart:style-name=\"ch1\">"  )
+      dest.write(    "<chart:plot-area chart:style-name=\"ch2\" table:cell-range-address=\"Data.B1:Data.B%d Data.F1:Data.F%d\" svg:x=\"0.503cm\" svg:y=\"0.285cm\" svg:width=\"24.164cm\" svg:height=\"13.725cm\">"   %  (noRows, noRows)      )
+
+      dest.write(    "<chartooo:coordinate-region svg:x=\"1.124cm\" svg:y=\"0.484cm\" svg:width=\"23.357cm\" svg:height=\"12.879cm\"/><chart:axis chart:dimension=\"x\" chart:name=\"primary-x\" chart:style-name=\"ch3\"/>"   )
+
+      dest.write(    "<chart:axis chart:dimension=\"y\" chart:name=\"primary-y\" chart:style-name=\"ch3\"><chart:grid chart:style-name=\"ch4\" chart:class=\"major\"/></chart:axis>"  )
+      dest.write(    "<chart:series chart:style-name=\"ch5\" chart:values-cell-range-address=\"Data.F1:Data.F%d\" chart:class=\"chart:scatter\">"   %  noRows  )
+      dest.write(    "<chart:domain table:cell-range-address=\"Data.B1:Data.B%d\"/><chart:data-point chart:repeated=\"%d\"/>"   % (noRows, noRows)  )
+      dest.write(    "</chart:series>"  )
+      
+      dest.write(    "<chart:wall chart:style-name=\"ch6\"/><chart:floor chart:style-name=\"ch7\"/></chart:plot-area><table:table table:name=\"local-table\"><table:table-header-columns><table:table-column/>"  )
+      dest.write(    "</table:table-header-columns>"  )
+
+
+      dest.write(    "<table:table-columns><table:table-column table:number-columns-repeated=\"2\"/></table:table-columns>"  )
+
+      dest.write(    "<table:table-header-rows>"  )
+      dest.write(    "<table:table-row>"  )
+      dest.write(    "<table:table-cell><text:p/></table:table-cell>"  )
+      dest.write(    "<table:table-cell office:value-type=\"string\"><text:p>Column B</text:p></table:table-cell><table:table-cell office:value-type=\"string\"><text:p>Column F</text:p></table:table-cell>"  )
+      dest.write(    "</table:table-row>"  )
+      dest.write(    "</table:table-header-rows>"  )
+
+
+
+
+
+
       dest.write(    "<table:table-rows>"  )
       i4 = 0
       for i1 in range(0,len(adxl_idx)):
@@ -309,7 +370,7 @@ def correl(infile1, infile2, output, diff = -467.0):
 
      os.remove(  runningPath +  "/content_local.xml"  )
      os.remove(  runningPath +  "/content_local_obj1.xml"  )
-     os.remove(  runningPath +  "/content_local_obj2.xml"  )
+     #os.remove(  runningPath +  "/content_local_obj2.xml"  )
      
 
 
