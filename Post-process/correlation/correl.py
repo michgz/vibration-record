@@ -17,15 +17,13 @@ def ODSDate(dt):
 
 
 
-def correl(infile1, infile2, output, diff = -467.0):
+def correl(infile1, infile2, output, diff = float('nan')):
 
 
     # The time delta by which ADXL is _before_ LSM6.
     #
     # This was determined manually. Next big challenge: do it automatically!!
     #
-    time_diff = datetime.timedelta( seconds=diff )
-
 
     runningPath = os.path.dirname(os.path.abspath(__file__))
 
@@ -49,7 +47,83 @@ def correl(infile1, infile2, output, diff = -467.0):
       lsm6.append([a1,a2,a3])
 
 
+    if (math.isnan(diff)):
 
+
+        # Here were determine the time delta automatically.
+        #
+        
+        # First, ensure that the two traces at least overlap in time.
+        
+        if (min([a[0] for a in adxl]) < max([a[0] for a in lsm6])) and (min([a[0] for a in lsm6]) < max([a[0] for a in adxl])):
+            pass    # we're ok
+        else:
+            sys.exit(6)   # now okay
+            
+        # Now choose the top 25%
+        
+        min_len = min([len(adxl), len(lsm6)])
+        
+        if (min_len <= 10):
+            choose_len = min_len
+        else:
+            choose_len = min_len /4;
+            
+            
+        def sortKey(e):
+            return e[1]  # or e[2]
+        
+        sorted_1 = sorted(adxl, key=sortKey, reverse=True)[0:choose_len]
+        sorted_2 = sorted(lsm6, key=sortKey, reverse=True)[0:choose_len]
+        
+        
+        #The following are in seconds
+        epsilon = 20
+        step_big = 10  # best if it's about 1/2 epsilon
+        step_small = 1   # usually 1
+
+
+        vals = range(-4000,4000,step_big)
+            
+        # First pass
+        v3 = []
+        for v in vals:
+            b3 = 0
+            for b1 in sorted_1:
+                for b2 in sorted_2:
+                    if (abs(b1[0]+datetime.timedelta(seconds=v)-b2[0]).total_seconds() < epsilon):
+                        b3 += 1
+                        break
+            v3.append(b3)
+            
+        max_at = vals[v3.index(max(v3))]
+        
+        # Second pass
+        vals = range(max_at - 2*step_big, max_at + 2*step_big, step_small)
+        v3 = []
+        for v in vals:
+            b3 = 0
+            for b1 in sorted_1:
+                for b2 in sorted_2:
+                    if (abs(b1[0]+datetime.timedelta(seconds=v)-b2[0]).total_seconds() < epsilon):
+                        b3 += 1
+                        break
+            v3.append(b3)
+            
+        max_val = max(v3)
+        
+        # Now take the average of all values with the same maximum value
+        
+        max_at = [i for i, j in enumerate(v3) if j == max_val]
+        
+        time_diff = datetime.timedelta( seconds=vals[sum(max_at)/len(max_at)] )
+                    
+    else:
+
+        time_diff = datetime.timedelta( seconds=diff )
+
+
+    print "Using time difference of " + str(time_diff.total_seconds()) + " seconds"
 
 
 
