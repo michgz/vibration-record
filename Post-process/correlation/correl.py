@@ -2,6 +2,9 @@
 ##
 
 
+from trace import Trace
+from trace import ReadIn
+
 import datetime
 import os
 import sys
@@ -29,22 +32,16 @@ def correl(infile1, infile2, output, diff = float('nan')):
 
 
     adxl = []
-    with open(infile1,'r') as f1:
-     for s in f1:
-      t = s.strip().split('\t')
-      a1 = datetime.datetime.strptime(t[0], '%d/%m/%Y %H:%M:%S')
-      a2 = float(t[1])
-      a3 = float(t[2])
-      adxl.append([a1,a2,a3])
+    ax = ReadIn([infile1])
+    for ay in ax:
+     az = ay.Calc()
+     adxl.append([ay.dt,az[1],az[2]])
 
     lsm6 = []
-    with open(infile2,'r') as f1:
-     for s in f1:
-      t = s.strip().split('\t')
-      a1 = datetime.datetime.strptime(t[0], '%d/%m/%Y %H:%M:%S')
-      a2 = float(t[1])
-      a3 = float(t[2])
-      lsm6.append([a1,a2,a3])
+    ax = ReadIn([infile2])
+    for ay in ax:
+     az = ay.Calc()
+     lsm6.append([ay.dt,az[1],az[2]])
 
 
     if (math.isnan(diff)):
