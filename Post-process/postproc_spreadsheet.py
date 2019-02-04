@@ -229,6 +229,8 @@ def IsLikelyDateTime(str):
  
 def postproc_spreadsheet(*args, **kwargs):
 
+    global bIsShort
+
     runningPath = os.path.abspath(os.path.dirname(__file__))
 
     # Open log file
@@ -240,9 +242,9 @@ def postproc_spreadsheet(*args, **kwargs):
 
      theName = kwargs["output"]
      inputFiles = args
-     bIsShort = False
+     bIsShort = True
      if not not kwargs.get("long"):   # False if not existing as an argument
-         bIsSort = True
+         bIsShort = False
 
 
 
@@ -630,6 +632,8 @@ def postproc_spreadsheet(*args, **kwargs):
       z.close()
 
      os.remove(  runningPath +  "/content_local.xml")
+     os.remove(  runningPath +  "/7")
+     os.remove(  runningPath +  "/8")
 
      f9.write( "Completed!\r\r" )
 
