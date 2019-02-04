@@ -12,12 +12,16 @@ import zipfile
 import shutil
 import math
 import getopt
+import numpy
 
 
 
 def ODSDate(dt):
  return dt.strftime("<table:table-cell table:style-name=\"ce3\" office:value-type=\"date\" office:date-value=\"%Y-%m-%dT%H:%M:%S\" calcext:value-type=\"date\"><text:p>%d/%m/%Y %H:%M:%S</text:p></table:table-cell>")
 
+
+def bIncludeTraces():
+ return True
 
 
 def correl(infile1, infile2, output, diff = float('nan')):
@@ -32,14 +36,14 @@ def correl(infile1, infile2, output, diff = float('nan')):
 
 
     adxl = []
-    ax = ReadIn([infile1])
-    for ay in ax:
+    ax1 = ReadIn([infile1])
+    for ay in ax1:
      az = ay.Calc()
      adxl.append([ay.dt,az[1],az[2]])
 
     lsm6 = []
-    ax = ReadIn([infile2])
-    for ay in ax:
+    ax2 = ReadIn([infile2])
+    for ay in ax2:
      az = ay.Calc()
      lsm6.append([ay.dt,az[1],az[2]])
 
@@ -145,6 +149,8 @@ def correl(infile1, infile2, output, diff = float('nan')):
     a1_idx = 0
 
 
+    ## Find matching indices
+    ##
     for a1 in adxl:
      targ_time = a1[0] + time_diff
      best_idx = 999999   # Just any value
@@ -161,6 +167,22 @@ def correl(infile1, infile2, output, diff = float('nan')):
       lsm6_idx[best_idx] = a1_idx
      a1_idx += 1
      
+
+
+    ## Choose some representative points
+    ##
+    bx2 = []
+    bx_idx = 0
+    for a1 in adxl:
+        bx2.append(a1[1])   # or [2]
+        bx_idx += 1
+    bx1 = numpy.argsort(numpy.array(bx2))   # sorted indices
+    
+    num_bx = min(len(bx1) / 2, 100)    # number of indices to use.
+    
+    bx1 = bx1[0:num_bx]
+
+
 
 
 
@@ -332,7 +354,44 @@ def correl(infile1, infile2, output, diff = float('nan')):
 
       dest.write(       "<office:body>"    )
       dest.write(       "<office:spreadsheet>"    )
-      dest.write(       "<table:calculation-settings table:automatic-find-labels=\"false\"/>"    )
+      dest.write(       "<table:calculation-settings table:automatic-find-labels=\"false\"/>"    )      
+
+      dest.write(    "<table:table table:name=\"Raw\" table:style-name=\"ta1\">"    )
+      dest.write(    "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"7\" table:default-cell-style-name=\"Default\"/>"   )
+      if bIncludeTraces():
+            for bi in bx1:
+                ## Find the corresponding point
+                ci = adxl_idx[bi]
+                dest.write(    "<table:table-row table:style-name=\"ro1\">"    )
+                dest.write(       ODSDate(ax1[bi].dt)      )
+                dest.write(   "<table:table-cell/><table:table-cell/><table:table-cell/>"   )
+                dest.write(       ODSDate(ax2[ci].dt)      )
+                dest.write(   "</table:table-row>"   )
+                for ii in range(0, 500):
+                    dest.write(    "<table:table-row table:style-name=\"ro1\">"    )
+                    if (ii < len(ax1[bi].x)):
+                        f3 = ax1[bi].x[ii]
+                        dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"   %   (f3, f3)    )
+                        f3 = ax1[bi].y[ii]
+                        dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"   %   (f3, f3)    )
+                        f3 = ax1[bi].z[ii]
+                        dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"   %   (f3, f3)    )
+                    else:
+                        dest.write(   "<table:table-cell/><table:table-cell/><table:table-cell/>"   )
+                    dest.write(   "<table:table-cell/>"   )
+                    if (ii < len(ax2[ci].x)):
+                        f3 = ax2[ci].x[ii]
+                        dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"   %   (f3, f3)    )
+                        f3 = ax2[ci].y[ii]
+                        dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"   %   (f3, f3)    )
+                        f3 = ax2[ci].z[ii]
+                        dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\" calcext:value-type=\"float\"><text:p>%0.3f</text:p></table:table-cell>"   %   (f3, f3)    )
+                    else:
+                        dest.write(   "<table:table-cell/><table:table-cell/><table:table-cell/>"   )
+                    dest.write(   "</table:table-row>"   )
+      full_len = len(bx1)*501
+      dest.write(    "</table:table>"   )
+
       dest.write(       "<table:table table:name=\"Data\" table:style-name=\"ta1\">"    )
       dest.write(       "<table:shapes>"    )
       dest.write(       "<draw:frame draw:z-index=\"0\" draw:style-name=\"gr1\" draw:text-style-name=\"P1\" svg:width=\"251.69mm\" svg:height=\"142.94mm\" svg:x=\"223.06mm\" svg:y=\"7.17mm\">"    )
@@ -428,11 +487,68 @@ def correl(infile1, infile2, output, diff = float('nan')):
         dest.write(       "</table:table-row>"     )
 
       dest.write(       "</table:table>"     )
+
+
+      ## Now write out the third table sheet
+
+      dest.write(    "<table:table table:name=\"Compare\" table:style-name=\"ta1\">"    )
+      dest.write(    "<table:shapes>"   )
+      
+      dest.write(    "<draw:frame draw:z-index=\"0\" draw:style-name=\"gr1\" draw:text-style-name=\"P1\" svg:width=\"278.64mm\" svg:height=\"168.14mm\" svg:x=\"85.08mm\" svg:y=\"19.65mm\">"  )
+      dest.write(    "<draw:object draw:notify-on-update-of-ranges=\"Compare.D3:Compare.D502 Compare.E3:Compare.E502 Compare.D3:Compare.D502 Compare.F3:Compare.F502 Compare.D3:Compare.D502 Compare.G3:Compare.G502\" xlink:href=\"./Object 3\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"><loext:p/>"   )
+      dest.write(    "</draw:object>"   )
+      dest.write(    "<draw:image xlink:href=\"./ObjectReplacements/Object 3\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"/>"   )
+      dest.write(    "</draw:frame>"   )
+
+      dest.write(    "<draw:frame draw:z-index=\"1\" draw:style-name=\"gr1\" draw:text-style-name=\"P1\" svg:width=\"306.74mm\" svg:height=\"172.65mm\" svg:x=\"372.25mm\" svg:y=\"17.8mm\">"   )
+      dest.write(    "<draw:object draw:notify-on-update-of-ranges=\"Compare.I3:Compare.I502 Compare.J3:Compare.J502 Compare.I3:Compare.I502 Compare.K3:Compare.K502 Compare.I3:Compare.I502 Compare.L3:Compare.L502\" xlink:href=\"./Object 4\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"><loext:p/>"    )
+      dest.write(    "</draw:object>"   )
+      dest.write(    "<draw:image xlink:href=\"./ObjectReplacements/Object 4\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"/>"   )
+      dest.write(    "</draw:frame>"   )
+
+      dest.write(    "</table:shapes>"   )
+
+      dest.write(    "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"12\" table:default-cell-style-name=\"Default\"/>"   )
+
+      dest.write(    "<table:table-row table:style-name=\"ro1\"/>"     )
+      dest.write(    "<table:table-row table:style-name=\"ro1\"><table:table-cell/>"     )
+      dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"1\" calcext:value-type=\"float\"><text:p>1</text:p></table:table-cell>"   )
+      dest.write(    "<table:table-cell/><table:table-cell/>"    )
+      dest.write(    "<table:table-cell table:formula=\"of:=INDEX([.$A$3:.$C$%d];[.$B$2];2)\" office:value-type=\"float\" office:value=\"502\" calcext:value-type=\"float\"><text:p>502</text:p></table:table-cell>"    %   (500)    )
+      dest.write(    "</table:table-row>"     )
+      
+      
+      for yi in range(0,500):
+            dest.write(    "<table:table-row table:style-name=\"ro1\">"     )
+            dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi+1, yi+1)   )
+            dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi*501+1, yi*501+1)   )
+            dest.write(    "<table:table-cell/>"   )
+            dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi+1, yi+1)   )
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$E$2]+[.$D%d];1)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$E$2]+[.$D%d];2)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$E$2]+[.$D%d];3)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "<table:table-cell/>"   )
+            dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi+1, yi+1)   )            
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$E$2]+[.$I%d];1)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$E$2]+[.$I%d];2)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$E$2]+[.$I%d];3)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "</table:table-row>"     )  
+        
+      #dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$B$2]+1;1)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1)    )
+      #dest.write(    "</table:table-row>"     )
+      
+      
+      dest.write(    "</table:table>"   )
+
+
+
+      ## Finish the document
+      
       dest.write(       "</office:spreadsheet></office:body></office:document-content>" )
 
 
      ##### Now write to the ZIP archive  ####
-     shutil.copy2(  runningPath + "/5_1.ods", theName)
+     shutil.copy2(  runningPath + "/6_2.ODS", theName)  # 6_2 includes plots, 5_1 does not.
      with zipfile.ZipFile(theName, "a") as z:
       z.write(  runningPath +  "/content_local.xml", "content.xml", zipfile.ZIP_DEFLATED )
       z.write(  runningPath +  "/content_local_obj1.xml", "Object 1/content.xml", zipfile.ZIP_DEFLATED )
@@ -441,7 +557,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
 
      os.remove(  runningPath +  "/content_local.xml"  )
      os.remove(  runningPath +  "/content_local_obj1.xml"  )
-     #os.remove(  runningPath +  "/content_local_obj2.xml"  )
+     os.remove(  runningPath +  "/content_local_obj2.xml"  )
      
 
 
