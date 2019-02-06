@@ -17,7 +17,7 @@ import numpy
 
 
 def ODSDate(dt):
- return dt.strftime("<table:table-cell table:style-name=\"ce3\" office:value-type=\"date\" office:date-value=\"%Y-%m-%dT%H:%M:%S\" calcext:value-type=\"date\"><text:p>%d/%m/%Y %H:%M:%S</text:p></table:table-cell>")
+ return dt.strftime("<table:table-cell table:style-name=\"ce2\" office:value-type=\"date\" office:date-value=\"%Y-%m-%dT%H:%M:%S\" calcext:value-type=\"date\"><text:p>%d/%m/%Y %H:%M:%S</text:p></table:table-cell>")
 
 
 def bIncludeTraces():
@@ -177,10 +177,19 @@ def correl(infile1, infile2, output, diff = float('nan')):
         bx2.append(a1[1])   # or [2]
         bx_idx += 1
     bx1 = numpy.argsort(numpy.array(bx2))   # sorted indices
+
+    ## Select only those for which a match exists
+    #
+    bx0 = []
+    for b0 in bx1:
+        if adxl_idx[b0]>=0:
+            bx0.append(b0)
+
+    ## Limit the number
+    #
+    num_bx = min(len(bx0) / 2, 100)    # number of indices to use.
     
-    num_bx = min(len(bx1) / 2, 100)    # number of indices to use.
-    
-    bx1 = bx1[0:num_bx]
+    bx1 = bx0[0:num_bx]
 
 
 
@@ -357,7 +366,10 @@ def correl(infile1, infile2, output, diff = float('nan')):
       dest.write(       "<table:calculation-settings table:automatic-find-labels=\"false\"/>"    )      
 
       dest.write(    "<table:table table:name=\"Raw\" table:style-name=\"ta1\">"    )
-      dest.write(    "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"7\" table:default-cell-style-name=\"Default\"/>"   )
+      dest.write(       "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"ce3\"/>"    )
+      dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"3\" table:default-cell-style-name=\"Default\"/>"    )
+      dest.write(       "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"Default\"/>"    )
+      dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/>"    )
       if bIncludeTraces():
             for bi in bx1:
                 ## Find the corresponding point
@@ -508,36 +520,54 @@ def correl(infile1, infile2, output, diff = float('nan')):
 
       dest.write(    "</table:shapes>"   )
 
-      dest.write(    "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"12\" table:default-cell-style-name=\"Default\"/>"   )
+      dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"4\" table:default-cell-style-name=\"Default\"/>"    )
+      dest.write(       "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"ce3\"/>"    )
+      dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"4\" table:default-cell-style-name=\"Default\"/>"    )
+      dest.write(       "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"Default\"/>"    )
+      dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/>"    )
 
       dest.write(    "<table:table-row table:style-name=\"ro1\"/>"     )
       dest.write(    "<table:table-row table:style-name=\"ro1\"><table:table-cell/>"     )
       dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"1\" calcext:value-type=\"float\"><text:p>1</text:p></table:table-cell>"   )
-      dest.write(    "<table:table-cell/><table:table-cell/>"    )
+      dest.write(    "<table:table-cell/>"    )
       dest.write(    "<table:table-cell table:formula=\"of:=INDEX([.$A$3:.$C$%d];[.$B$2];2)\" office:value-type=\"float\" office:value=\"502\" calcext:value-type=\"float\"><text:p>502</text:p></table:table-cell>"    %   (500)    )
+
+      dest.write(    "<table:table-cell table:style-name=\"ce2\" table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$D$2];1)\" "   %   (full_len + 1)   )
+      dt_x = datetime.datetime.now()
+      dest.write(    dt_x.strftime("office:value-type=\"date\" office:date-value=\"%Y-%m-%dT%H:%M:%S\" calcext:value-type=\"date\"><text:p>%d/%m/%Y %H:%M:%S</text:p></table:table-cell>")    )
+      #dest.write(    "<table:table-cell/>"     )
+
+      dest.write(    "<table:table-cell/><table:table-cell/><table:table-cell/><table:table-cell/>"     )
+      dest.write(    "<table:table-cell table:style-name=\"ce2\" table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$D$2];1)\" "   %   (full_len + 1)   )
+      dt_x = datetime.datetime.now()
+      dest.write(    dt_x.strftime("office:value-type=\"date\" office:date-value=\"%Y-%m-%dT%H:%M:%S\" calcext:value-type=\"date\"><text:p>%d/%m/%Y %H:%M:%S</text:p></table:table-cell>")    )
+
+      dest.write(    "<table:table-cell/>"     )
+      dest.write(    "<table:table-cell table:style-name=\"ce5\" table:formula=\"of:=24*60*60*([.J2]-[.E2])\" office:value-type=\"float\" office:value=\"0\" calcext:value-type=\"float\"><text:p>0.00</text:p></table:table-cell>"   )
       dest.write(    "</table:table-row>"     )
-      
       
       for yi in range(0,500):
             dest.write(    "<table:table-row table:style-name=\"ro1\">"     )
+            ## Limit the number. What if num_bx > 500?? That can't happpen at the moment because (above) it
+            #  is limited to 100, but maybe in future?
+            #
+            if yi <= num_bx:
+                dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi+1, yi+1)   )
+                dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi*501+1, yi*501+1)   )
+                dest.write(    "<table:table-cell/>"   )
+            else:
+                dest.write(    "<table:table-cell/><table:table-cell/><table:table-cell/>"   )
             dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi+1, yi+1)   )
-            dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi*501+1, yi*501+1)   )
-            dest.write(    "<table:table-cell/>"   )
-            dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi+1, yi+1)   )
-            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$E$2]+[.$D%d];1)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
-            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$E$2]+[.$D%d];2)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
-            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$E$2]+[.$D%d];3)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$D$2]+[.$D%d];1)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$D$2]+[.$D%d];2)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$D$2]+[.$D%d];3)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
             dest.write(    "<table:table-cell/>"   )
             dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi+1, yi+1)   )            
-            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$E$2]+[.$I%d];1)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
-            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$E$2]+[.$I%d];2)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
-            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$E$2]+[.$I%d];3)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$D$2]+[.$I%d];1)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$D$2]+[.$I%d];2)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
+            dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$D$2]+[.$I%d];3)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
             dest.write(    "</table:table-row>"     )  
-        
-      #dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$B$2]+1;1)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1)    )
-      #dest.write(    "</table:table-row>"     )
-      
-      
+
       dest.write(    "</table:table>"   )
 
 
