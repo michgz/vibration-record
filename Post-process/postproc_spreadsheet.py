@@ -658,7 +658,7 @@ def usage():
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "ho:sl", ["help", "output=", "short", "long"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:sl", ["help", "output=", "short", "long"])
     except getopt.GetoptError as err:
         # print help information and exit:
         print str(err)  # will print something like "option -a not recognized"
