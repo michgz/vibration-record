@@ -534,10 +534,10 @@ def postproc_spreadsheet(*args, **kwargs):
        # Take a guess at time & amplitude scalers:
        if (is_probably_adxl_device):
         freqVal = 125.
-        amplVal = 256000.
        else:
         freqVal = 104.
-        amplVal = 16384.
+       #Recent versions of the firmware have the same amplitude multiplier for both accelerometers
+       amplVal = 16384.
        if (not bIncludeTraces() or i_loc == 0 or i_loc == 2 or i_loc >= (maxLength + 5)):
         file_loc.write(   "<table:table-cell table:style-name=\"Default\" table:number-columns-repeated=\"5\"/>"   )
        elif (i_loc == 1):
