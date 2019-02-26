@@ -118,7 +118,7 @@ float ReadVBAT(void)
   ADC->INPUTCTRL.bit.GAIN = 0xF;  // 1/2x gain
 
   // Do a "special" read
-  int x = analogRead_Special(0x0F);  // 0x0F = AIN15 (*not* AIN7 as stated in Adafruit documentation)
+  int x = analogRead_Special(0x07);  // 0x07 = VBAT/2
 
   // Do the scaling to volts
   float v = 1.6500 * (((float) x) / 1023.0);
