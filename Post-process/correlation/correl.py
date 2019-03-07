@@ -53,31 +53,31 @@ def correl(infile1, infile2, output, diff = float('nan')):
 
         # Here were determine the time delta automatically.
         #
-        
+
         # First, ensure that the two traces at least overlap in time.
-        
+
         if (min([a[0] for a in adxl]) < max([a[0] for a in lsm6])) and (min([a[0] for a in lsm6]) < max([a[0] for a in adxl])):
             pass    # we're ok
         else:
             sys.exit(6)   # now okay
-            
+
         # Now choose the top 25%
-        
+
         min_len = min([len(adxl), len(lsm6)])
-        
+
         if (min_len <= 10):
             choose_len = min_len
         else:
             choose_len = min_len /4;
-            
-            
+
+
         def sortKey(e):
             return e[1]  # or e[2]
-        
+
         sorted_1 = sorted(adxl, key=sortKey, reverse=True)[0:choose_len]
         sorted_2 = sorted(lsm6, key=sortKey, reverse=True)[0:choose_len]
-        
-        
+
+
         #The following are in seconds
         epsilon = 20
         step_big = 10  # best if it's about 1/2 epsilon
@@ -85,7 +85,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
 
 
         vals = range(-4000,4000,step_big)
-            
+
         # First pass
         v3 = []
         for v in vals:
@@ -96,7 +96,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
                         b3 += 1
                         break
             v3.append(b3)
-            
+
         max_at = vals[v3.index(max(v3))]
         
         # Second pass
@@ -110,15 +110,15 @@ def correl(infile1, infile2, output, diff = float('nan')):
                         b3 += 1
                         break
             v3.append(b3)
-            
+
         max_val = max(v3)
-        
+
         # Now take the average of all values with the same maximum value
-        
+
         max_at = [i for i, j in enumerate(v3) if j == max_val]
-        
+
         time_diff = datetime.timedelta( seconds=vals[sum(max_at)/len(max_at)] )
-                    
+
     else:
 
         time_diff = datetime.timedelta( seconds=diff )
@@ -166,7 +166,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
       adxl_idx[a1_idx] = best_idx
       lsm6_idx[best_idx] = a1_idx
      a1_idx += 1
-     
+
 
 
     ## Choose some representative points
@@ -188,7 +188,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
     ## Limit the number
     #
     num_bx = min(len(bx0) / 2, 100)    # number of indices to use.
-    
+
     bx1 = bx0[0:num_bx]
 
 
@@ -237,7 +237,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
       dest.write(    "<chart:series chart:style-name=\"ch5\" chart:values-cell-range-address=\"Data.G1:Data.G%d\" chart:class=\"chart:scatter\">"   %  noRows  )
       dest.write(    "<chart:domain table:cell-range-address=\"Data.C1:Data.C%d\"/><chart:data-point chart:repeated=\"%d\"/>"   % (noRows, noRows)  )
       dest.write(    "</chart:series>"  )
-      
+
       dest.write(    "<chart:wall chart:style-name=\"ch6\"/><chart:floor chart:style-name=\"ch7\"/></chart:plot-area><table:table table:name=\"local-table\"><table:table-header-columns><table:table-column/>"  )
       dest.write(    "</table:table-header-columns>"  )
 
@@ -299,7 +299,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
       dest.write(    "<chart:series chart:style-name=\"ch5\" chart:values-cell-range-address=\"Data.F1:Data.F%d\" chart:class=\"chart:scatter\">"   %  noRows  )
       dest.write(    "<chart:domain table:cell-range-address=\"Data.B1:Data.B%d\"/><chart:data-point chart:repeated=\"%d\"/>"   % (noRows, noRows)  )
       dest.write(    "</chart:series>"  )
-      
+
       dest.write(    "<chart:wall chart:style-name=\"ch6\"/><chart:floor chart:style-name=\"ch7\"/></chart:plot-area><table:table table:name=\"local-table\"><table:table-header-columns><table:table-column/>"  )
       dest.write(    "</table:table-header-columns>"  )
 
@@ -363,7 +363,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
 
       dest.write(       "<office:body>"    )
       dest.write(       "<office:spreadsheet>"    )
-      dest.write(       "<table:calculation-settings table:automatic-find-labels=\"false\"/>"    )      
+      dest.write(       "<table:calculation-settings table:automatic-find-labels=\"false\"/>"    )
 
       dest.write(    "<table:table table:name=\"Raw\" table:style-name=\"ta1\">"    )
       dest.write(       "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"ce3\"/>"    )
@@ -425,7 +425,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
       dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/>"    )
 
 
-     
+
       for i1 in range(0,len(adxl_idx)):
 
        if (adxl_idx[i1] >= 0):
@@ -505,7 +505,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
 
       dest.write(    "<table:table table:name=\"Compare\" table:style-name=\"ta1\">"    )
       dest.write(    "<table:shapes>"   )
-      
+
       dest.write(    "<draw:frame draw:z-index=\"0\" draw:style-name=\"gr1\" draw:text-style-name=\"P1\" svg:width=\"278.64mm\" svg:height=\"168.14mm\" svg:x=\"85.08mm\" svg:y=\"19.65mm\">"  )
       dest.write(    "<draw:object draw:notify-on-update-of-ranges=\"Compare.D3:Compare.D502 Compare.E3:Compare.E502 Compare.D3:Compare.D502 Compare.F3:Compare.F502 Compare.D3:Compare.D502 Compare.G3:Compare.G502\" xlink:href=\"./Object 3\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"><loext:p/>"   )
       dest.write(    "</draw:object>"   )
@@ -545,7 +545,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
       dest.write(    "<table:table-cell/>"     )
       dest.write(    "<table:table-cell table:style-name=\"ce5\" table:formula=\"of:=24*60*60*([.J2]-[.E2])\" office:value-type=\"float\" office:value=\"0\" calcext:value-type=\"float\"><text:p>0.00</text:p></table:table-cell>"   )
       dest.write(    "</table:table-row>"     )
-      
+
       for yi in range(0,500):
             dest.write(    "<table:table-row table:style-name=\"ro1\">"     )
             ## Limit the number. What if num_bx > 500?? That can't happpen at the moment because (above) it
@@ -562,18 +562,18 @@ def correl(infile1, infile2, output, diff = float('nan')):
             dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$D$2]+[.$D%d];2)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
             dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$A$1:.$C$%d];[.$D$2]+[.$D%d];3)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
             dest.write(    "<table:table-cell/>"   )
-            dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi+1, yi+1)   )            
+            dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi+1, yi+1)   )
             dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$D$2]+[.$I%d];1)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
             dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$D$2]+[.$I%d];2)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
             dest.write(    "<table:table-cell table:formula=\"of:=INDEX([$Raw.$E$1:.$G$%d];[.$D$2]+[.$I%d];3)\" office:value-type=\"float\" office:value=\"0.0000\" calcext:value-type=\"float\"><text:p>0.0000</text:p></table:table-cell>"    %   (full_len+1, yi+3)    )
-            dest.write(    "</table:table-row>"     )  
+            dest.write(    "</table:table-row>"     )
 
       dest.write(    "</table:table>"   )
 
 
 
       ## Finish the document
-      
+
       dest.write(       "</office:spreadsheet></office:body></office:document-content>" )
 
 
@@ -588,7 +588,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
      os.remove(  runningPath +  "/content_local.xml"  )
      os.remove(  runningPath +  "/content_local_obj1.xml"  )
      os.remove(  runningPath +  "/content_local_obj2.xml"  )
-     
+
 
 
 
@@ -628,8 +628,8 @@ def main():
     if (Output == None):
         # Have no output. Fails.
         sys.exit(4)
-        
-        
+
+
     if (len(args) != 2):
         # Wrong number of args. Fails.
         sys.exit(4)
@@ -640,7 +640,7 @@ def main():
         input1 = os.path.abspath(args[0])
     else:
         sys.exit(3)
-        
+
     if args[1].upper().endswith('.CSV'):
         input2 = os.path.abspath(args[1])
     else:
@@ -651,7 +651,7 @@ def main():
         correl(input1, input2, output=Output)
     else:
         correl(input1, input2, output=Output, diff=Diff)
-    
+
 
 
 
