@@ -24,7 +24,7 @@ def bIncludeTraces():
  return True
 
 
-def correl(infile1, infile2, output, diff = float('nan')):
+def correl(infile1, infile2, intext1, intext2, output, diff = float('nan')):
 
 
     # The time delta by which ADXL is _before_ LSM6.
@@ -203,7 +203,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
         theName = os.path.join(runningPath, output)
 
 
-
+    axis_labels = True
     if True:
 
      # Now output to a file
@@ -225,17 +225,38 @@ def correl(infile1, infile2, output, diff = float('nan')):
          break
         dest.write(copy_buff)
 
-
       dest.write(    "<office:body>"  )
       dest.write(    "<office:chart>"  )
       dest.write(    "<chart:chart svg:width=\"25.17cm\" svg:height=\"14.295cm\" xlink:href=\"..\" xlink:type=\"simple\" chart:class=\"chart:scatter\" chart:style-name=\"ch1\">"  )
-      dest.write(    "<chart:plot-area chart:style-name=\"ch2\" table:cell-range-address=\"Data.C1:Data.C%d Data.G1:Data.G%d\" svg:x=\"0.503cm\" svg:y=\"0.285cm\" svg:width=\"24.164cm\" svg:height=\"13.725cm\">"   %  (noRows, noRows)      )
+      dest.write(    "<chart:plot-area chart:style-name=\"ch2\" table:cell-range-address=\"Data.C2:Data.C%d Data.G2:Data.G%d\" svg:x=\"0.538cm\" svg:y=\"0.284cm\" svg:width=\"24.124cm\" svg:height=\"13.514cm\">"   %  (noRows+2, noRows+2)      )
 
-      dest.write(    "<chartooo:coordinate-region svg:x=\"1.31cm\" svg:y=\"0.484cm\" svg:width=\"23.077cm\" svg:height=\"12.879cm\"/><chart:axis chart:dimension=\"x\" chart:name=\"primary-x\" chart:style-name=\"ch3\"/>"    )
+      dest.write(    "<chartooo:coordinate-region svg:x=\"1.345cm\" svg:y=\"0.483cm\" svg:width=\"22.853cm\" svg:height=\"12.668cm\"/>"    )
+      
+      dest.write(    "<chart:axis chart:dimension=\"x\" chart:name=\"primary-x\" chart:style-name=\"ch3\""  )
+      if (axis_labels):
+          dest.write(    ">"    )
+          #dest.write(    "<chart:title svg:x=\"11.511cm\" svg:y=\"13.735cm\" chart:style-name=\"ch4\">"    )
+          dest.write(    "<chart:title svg:x=\"11.511cm\" svg:y=\"13.735cm\">"    )
+          dest.write(    "<text:p>%s</text:p>"  %   intext1  )
+          dest.write(    "</chart:title>"    )
+          dest.write(    "</chart:axis>"    )
+      else:
+          dest.write(   "/>"    )
 
-      dest.write(    "<chart:axis chart:dimension=\"y\" chart:name=\"primary-y\" chart:style-name=\"ch3\"><chart:grid chart:style-name=\"ch4\" chart:class=\"major\"/></chart:axis>"  )
-      dest.write(    "<chart:series chart:style-name=\"ch5\" chart:values-cell-range-address=\"Data.G1:Data.G%d\" chart:class=\"chart:scatter\">"   %  noRows  )
-      dest.write(    "<chart:domain table:cell-range-address=\"Data.C1:Data.C%d\"/><chart:data-point chart:repeated=\"%d\"/>"   % (noRows, noRows)  )
+      dest.write(    "<chart:axis chart:dimension=\"y\" chart:name=\"primary-y\" chart:style-name=\"ch3\""   )
+      if (axis_labels):
+          dest.write(    ">"    )
+          #dest.write(    "<chart:title svg:x=\"0cm\" svg:y=\"8.13cm\" chart:style-name=\"ch5\">"    )
+          dest.write(    "<chart:title svg:x=\"0cm\" svg:y=\"8.13cm\">"    )
+          dest.write(    "<text:p>%s</text:p>"   %   intext2   )
+          dest.write(    "</chart:title>"    )
+      else:
+          dest.write(   ">"    )
+      
+      
+      dest.write(    "<chart:grid chart:style-name=\"ch4\" chart:class=\"major\"/></chart:axis>"  )
+      dest.write(    "<chart:series chart:style-name=\"ch5\" chart:values-cell-range-address=\"Data.G2:Data.G%d\" chart:class=\"chart:scatter\">"   %  (noRows+2)  )
+      dest.write(    "<chart:domain table:cell-range-address=\"Data.C2:Data.C%d\"/><chart:data-point chart:repeated=\"%d\"/>"   % (noRows+2, noRows)  )
       dest.write(    "</chart:series>"  )
 
       dest.write(    "<chart:wall chart:style-name=\"ch6\"/><chart:floor chart:style-name=\"ch7\"/></chart:plot-area><table:table table:name=\"local-table\"><table:table-header-columns><table:table-column/>"  )
@@ -266,12 +287,12 @@ def correl(infile1, infile2, output, diff = float('nan')):
         f3 = adxl[i1][1]
         dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\"><text:p>%0.3f</text:p>"   % (f3, f3)   )
         if (i3 ==1 ):
-         dest.write(   "<draw:g><svg:desc>Data.C1:Data.C%d</svg:desc></draw:g>"   % noRows   )
+         dest.write(   "<draw:g><svg:desc>Data.C2:Data.C%d</svg:desc></draw:g>"   % (noRows+2)   )
         dest.write(   "</table:table-cell>"   )
         f3 = lsm6[adxl_idx[i1]][1]
         dest.write(   "<table:table-cell office:value-type=\"float\" office:value=\"%0.3f\"><text:p>%0.3f</text:p>"   % (f3, f3)   )
         if (i3 ==1 ):
-         dest.write(   "<draw:g><svg:desc>Data.G1:Data.G%d</svg:desc></draw:g>"   % noRows   )
+         dest.write(   "<draw:g><svg:desc>Data.G2:Data.G%d</svg:desc></draw:g>"   % (noRows+2)   )
         dest.write(    "</table:table-cell>"    )
         dest.write(       "</table:table-row>"     )
 
@@ -291,13 +312,31 @@ def correl(infile1, infile2, output, diff = float('nan')):
       dest.write(    "<office:body>"  )
       dest.write(    "<office:chart>"  )
       dest.write(    "<chart:chart svg:width=\"25.17cm\" svg:height=\"14.295cm\" xlink:href=\"..\" xlink:type=\"simple\" chart:class=\"chart:scatter\" chart:style-name=\"ch1\">"  )
-      dest.write(    "<chart:plot-area chart:style-name=\"ch2\" table:cell-range-address=\"Data.B1:Data.B%d Data.F1:Data.F%d\" svg:x=\"0.503cm\" svg:y=\"0.285cm\" svg:width=\"24.164cm\" svg:height=\"13.725cm\">"   %  (noRows, noRows)      )
+      dest.write(    "<chart:plot-area chart:style-name=\"ch2\" table:cell-range-address=\"Data.B2:Data.B%d Data.F2:Data.F%d\" svg:x=\"0.503cm\" svg:y=\"0.285cm\" svg:width=\"24.164cm\" svg:height=\"13.725cm\">"   %  (noRows+2, noRows+2)      )
 
-      dest.write(    "<chartooo:coordinate-region svg:x=\"1.124cm\" svg:y=\"0.484cm\" svg:width=\"23.357cm\" svg:height=\"12.879cm\"/><chart:axis chart:dimension=\"x\" chart:name=\"primary-x\" chart:style-name=\"ch3\"/>"   )
+      dest.write(    "<chartooo:coordinate-region svg:x=\"1.124cm\" svg:y=\"0.482cm\" svg:width=\"23.076cm\" svg:height=\"12.512cm\"/>"    )
+           
+      dest.write(    "<chart:axis chart:dimension=\"x\" chart:name=\"primary-x\" chart:style-name=\"ch3\""   )
+      if (axis_labels):
+          dest.write(    ">"    )
+          #dest.write(    "<chart:title svg:x=\"11.538cm\" svg:y=\"13.735cm\" chart:style-name=\"ch4\">"    )
+          dest.write(    "<chart:title svg:x=\"11.538cm\" svg:y=\"13.735cm\">"    )
+          dest.write(    "<text:p>%s</text:p>"  %   intext1  )
+          dest.write(    "</chart:title>"    )
+          dest.write(    "</chart:axis>"    )
+      else:
+          dest.write(   "/>"    )
 
-      dest.write(    "<chart:axis chart:dimension=\"y\" chart:name=\"primary-y\" chart:style-name=\"ch3\"><chart:grid chart:style-name=\"ch4\" chart:class=\"major\"/></chart:axis>"  )
-      dest.write(    "<chart:series chart:style-name=\"ch5\" chart:values-cell-range-address=\"Data.F1:Data.F%d\" chart:class=\"chart:scatter\">"   %  noRows  )
-      dest.write(    "<chart:domain table:cell-range-address=\"Data.B1:Data.B%d\"/><chart:data-point chart:repeated=\"%d\"/>"   % (noRows, noRows)  )
+      dest.write(    "<chart:axis chart:dimension=\"y\" chart:name=\"primary-y\" chart:style-name=\"ch3\">"   )
+      if (axis_labels):
+          #dest.write(    "<chart:title svg:x=\"0cm\" svg:y=\"8.051cm\" chart:style-name=\"ch5\">"    )
+          dest.write(    "<chart:title svg:x=\"0cm\" svg:y=\"8.051cm\">"    )
+          dest.write(    "<text:p>%s</text:p>"   %   intext2   )
+          dest.write(    "</chart:title>"    )
+
+      dest.write(    "<chart:grid chart:style-name=\"ch4\" chart:class=\"major\"/></chart:axis>"  )
+      dest.write(    "<chart:series chart:style-name=\"ch5\" chart:values-cell-range-address=\"Data.F2:Data.F%d\" chart:class=\"chart:scatter\">"   %  (noRows+2)  )
+      dest.write(    "<chart:domain table:cell-range-address=\"Data.B2:Data.B%d\"/><chart:data-point chart:repeated=\"%d\"/>"   % (noRows+2, noRows)  )
       dest.write(    "</chart:series>"  )
 
       dest.write(    "<chart:wall chart:style-name=\"ch6\"/><chart:floor chart:style-name=\"ch7\"/></chart:plot-area><table:table table:name=\"local-table\"><table:table-header-columns><table:table-column/>"  )
@@ -344,6 +383,50 @@ def correl(infile1, infile2, output, diff = float('nan')):
 
 
 
+     with open(   runningPath + "/content_local_obj3.xml", "w") as dest:
+      with open(    runningPath +  "/3_1.xml", "r") as source:
+       while True:
+        copy_buff = source.read(4096)
+        if not copy_buff:
+         break
+        dest.write(copy_buff)
+
+
+      dest.write(    intext1  )
+
+
+      with open(    runningPath +  "/3_2.xml", "r") as source:
+       while True:
+        copy_buff = source.read(4096)
+        if not copy_buff:
+         break
+        dest.write(copy_buff)
+
+
+
+
+     with open(   runningPath + "/content_local_obj4.xml", "w") as dest:
+      with open(    runningPath +  "/4_1.xml", "r") as source:
+       while True:
+        copy_buff = source.read(4096)
+        if not copy_buff:
+         break
+        dest.write(copy_buff)
+
+
+      dest.write(    intext2  )
+
+
+      with open(    runningPath +  "/4_2.xml", "r") as source:
+       while True:
+        copy_buff = source.read(4096)
+        if not copy_buff:
+         break
+        dest.write(copy_buff)
+
+
+
+
 
 
      ######################################################
@@ -370,6 +453,15 @@ def correl(infile1, infile2, output, diff = float('nan')):
       dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"3\" table:default-cell-style-name=\"Default\"/>"    )
       dest.write(       "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"Default\"/>"    )
       dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/>"    )
+      
+      # Show the file names
+      dest.write(    "<table:table-row table:style-name=\"ro1\">"    )
+      dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % (intext1)   )
+      dest.write(   "<table:table-cell/><table:table-cell/><table:table-cell/>"   )
+      dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % (intext2)   )
+      dest.write(   "<table:table-cell/><table:table-cell/>"   )
+      dest.write(   "</table:table-row>"   )
+      
       if bIncludeTraces():
             for bi in bx1:
                 ## Find the corresponding point
@@ -378,7 +470,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
                 dest.write(       ODSDate(ax1[bi].dt)      )
                 dest.write(   "<table:table-cell/><table:table-cell/><table:table-cell/>"   )
                 dest.write(       ODSDate(ax2[ci].dt)      )
-                dest.write(   "</table:table-row>"   )
+                dest.write(   "<table:table-cell/><table:table-cell/></table:table-row>"   )
                 for ii in range(0, 500):
                     dest.write(    "<table:table-row table:style-name=\"ro1\">"    )
                     if (ii < len(ax1[bi].x)):
@@ -407,13 +499,13 @@ def correl(infile1, infile2, output, diff = float('nan')):
       dest.write(       "<table:table table:name=\"Data\" table:style-name=\"ta1\">"    )
       dest.write(       "<table:shapes>"    )
       dest.write(       "<draw:frame draw:z-index=\"0\" draw:style-name=\"gr1\" draw:text-style-name=\"P1\" svg:width=\"251.69mm\" svg:height=\"142.94mm\" svg:x=\"223.06mm\" svg:y=\"7.17mm\">"    )
-      dest.write(       "<draw:object draw:notify-on-update-of-ranges=\"Data.C1:Data.C%d Data.G1:Data.G%d\" xlink:href=\"./Object 1\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\">"  %  (noRows, noRows)  )
+      dest.write(       "<draw:object draw:notify-on-update-of-ranges=\"Data.C2:Data.C%d Data.G2:Data.G%d\" xlink:href=\"./Object 1\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\">"  %  (noRows+2, noRows+2)  )
       dest.write(       "<loext:p/>"    )
       dest.write(       "</draw:object>"    )
       dest.write(       "<draw:image xlink:href=\"./ObjectReplacements/Object 1\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"/>"    )
       dest.write(       "</draw:frame>"    )
       dest.write(       "<draw:frame draw:z-index=\"1\" draw:style-name=\"gr1\" draw:text-style-name=\"P1\" svg:width=\"251.69mm\" svg:height=\"142.94mm\" svg:x=\"409.83mm\" svg:y=\"79.95mm\">"    )
-      dest.write(       "<draw:object draw:notify-on-update-of-ranges=\"Data.B1:Data.B%d Data.F1:Data.F%d\" xlink:href=\"./Object 2\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\">" % (noRows, noRows)   )
+      dest.write(       "<draw:object draw:notify-on-update-of-ranges=\"Data.B2:Data.B%d Data.F2:Data.F%d\" xlink:href=\"./Object 2\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\">" % (noRows+2, noRows+2)   )
       dest.write(       "<loext:p/>"    )
       dest.write(       "</draw:object>"    )
       dest.write(       "<draw:image xlink:href=\"./ObjectReplacements/Object 2\" xlink:type=\"simple\" xlink:show=\"embed\" xlink:actuate=\"onLoad\"/>"    )
@@ -424,6 +516,14 @@ def correl(infile1, infile2, output, diff = float('nan')):
       dest.write(       "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"Default\"/>"    )
       dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/>"    )
 
+
+      # Show the file names
+      dest.write(    "<table:table-row table:style-name=\"ro1\">"    )
+      dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % (intext1)   )
+      dest.write(   "<table:table-cell/><table:table-cell/><table:table-cell/>"   )
+      dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % (intext2)   )
+      dest.write(   "<table:table-cell/><table:table-cell/>"   )
+      dest.write(   "</table:table-row>"   )
 
 
       for i1 in range(0,len(adxl_idx)):
@@ -526,7 +626,15 @@ def correl(infile1, infile2, output, diff = float('nan')):
       dest.write(       "<table:table-column table:style-name=\"co1\" table:default-cell-style-name=\"Default\"/>"    )
       dest.write(       "<table:table-column table:style-name=\"co2\" table:number-columns-repeated=\"2\" table:default-cell-style-name=\"Default\"/>"    )
 
-      dest.write(    "<table:table-row table:style-name=\"ro1\"/>"     )
+      # Show the file names
+      dest.write(    "<table:table-row table:style-name=\"ro1\"><table:table-cell/><table:table-cell/><table:table-cell/><table:table-cell/>"    )
+      dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % (intext1)   )
+      dest.write(   "<table:table-cell/><table:table-cell/><table:table-cell/><table:table-cell/>"   )
+      dest.write(   "<table:table-cell office:value-type=\"string\" calcext:value-type=\"string\"><text:p>%s</text:p></table:table-cell>" % (intext2)   )
+      dest.write(   "<table:table-cell/><table:table-cell/>"   )
+      dest.write(   "</table:table-row>"   )
+
+
       dest.write(    "<table:table-row table:style-name=\"ro1\"><table:table-cell/>"     )
       dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"1\" calcext:value-type=\"float\"><text:p>1</text:p></table:table-cell>"   )
       dest.write(    "<table:table-cell/>"    )
@@ -553,7 +661,7 @@ def correl(infile1, infile2, output, diff = float('nan')):
             #
             if yi <= num_bx:
                 dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi+1, yi+1)   )
-                dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi*501+1, yi*501+1)   )
+                dest.write(    "<table:table-cell office:value-type=\"float\" office:value=\"%d\" calcext:value-type=\"float\"><text:p>%d</text:p></table:table-cell>"   %  (yi*501+2, yi*501+2)   )
                 dest.write(    "<table:table-cell/>"   )
             else:
                 dest.write(    "<table:table-cell/><table:table-cell/><table:table-cell/>"   )
@@ -583,12 +691,15 @@ def correl(infile1, infile2, output, diff = float('nan')):
       z.write(  runningPath +  "/content_local.xml", "content.xml", zipfile.ZIP_DEFLATED )
       z.write(  runningPath +  "/content_local_obj1.xml", "Object 1/content.xml", zipfile.ZIP_DEFLATED )
       z.write(  runningPath +  "/content_local_obj2.xml", "Object 2/content.xml", zipfile.ZIP_DEFLATED )
+      z.write(  runningPath +  "/content_local_obj3.xml", "Object 3/content.xml", zipfile.ZIP_DEFLATED )
+      z.write(  runningPath +  "/content_local_obj4.xml", "Object 4/content.xml", zipfile.ZIP_DEFLATED )
       z.close()
 
      os.remove(  runningPath +  "/content_local.xml"  )
      os.remove(  runningPath +  "/content_local_obj1.xml"  )
      os.remove(  runningPath +  "/content_local_obj2.xml"  )
-
+     os.remove(  runningPath +  "/content_local_obj3.xml"  )
+     os.remove(  runningPath +  "/content_local_obj4.xml"  )
 
 
 
@@ -647,10 +758,33 @@ def main():
         sys.exit(3)
 
 
-    if math.isnan(Diff):
-        correl(input1, input2, output=Output)
+    # Determine the text to show as representation of each input. This is either the filename,
+    #  or the parent directory plus file name, depending on what the program determines.
+    
+    if (os.path.dirname(input1) == os.path.dirname(input2)):
+        # If the directory is the same, don't bother showing it.
+        input1_text = os.path.basename(input1)
+        input2_text = os.path.basename(input2)
     else:
-        correl(input1, input2, output=Output, diff=Diff)
+         if (args[0] == os.path.basename(input1)):
+             # If the input doesn't contain the directory, don't bother showing it
+             input1_text = args[0]
+         else:
+             # ... otherwise, show 1 level of the directory
+             input1_text = os.path.join(os.path.basename(os.path.dirname(input1)),os.path.dirname(input1))
+         if (args[1] == os.path.basename(input2)):
+             # If the input doesn't contain the directory, don't bother showing it
+             input2_text = args[1]
+         else:
+             # ... otherwise, show 1 level of the directory
+             input2_text = os.path.join(os.path.basename(os.path.dirname(input2)),os.path.dirname(input2))
+
+
+
+    if math.isnan(Diff):
+        correl(input1, input2, input1_text, input2_text, output=Output)
+    else:
+        correl(input1, input2, input1_text, input2_text, output=Output, diff=Diff)
 
 
 
