@@ -771,13 +771,13 @@ def main():
              input1_text = args[0]
          else:
              # ... otherwise, show 1 level of the directory
-             input1_text = os.path.join(os.path.basename(os.path.dirname(input1)),os.path.dirname(input1))
+             input1_text = os.path.join(os.path.basename(os.path.dirname(input1)),os.path.basename(input1))
          if (args[1] == os.path.basename(input2)):
              # If the input doesn't contain the directory, don't bother showing it
              input2_text = args[1]
          else:
              # ... otherwise, show 1 level of the directory
-             input2_text = os.path.join(os.path.basename(os.path.dirname(input2)),os.path.dirname(input2))
+             input2_text = os.path.join(os.path.basename(os.path.dirname(input2)),os.path.basename(input2))
 
 
 
