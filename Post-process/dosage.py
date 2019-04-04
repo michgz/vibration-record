@@ -7,7 +7,7 @@ import sys
 import datetime
 import getopt
 
-from postproc_spreadsheet import postproc_spreadsheet
+from dosage_spreadsheet import dosage_spreadsheet
 
 
 ######################################################################
@@ -33,7 +33,7 @@ def main():
     Output = None
     Long = False
     for o, a in opts:
-         if o in ("-h", "--help"):
+        if o in ("-h", "--help"):
             usage()
             sys.exit()
         elif o in ("-o", "--output"):
