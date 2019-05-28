@@ -1,4 +1,3 @@
-// ============================================================================================
 //  Basic Arduino include files
 // ============================================================================================
 
@@ -83,6 +82,7 @@ static int chipSelect = 4;
 #define PRINT_ACCEL_MEASUREMENTS()   (1)
 
 static bool use_serial = false;
+static bool use_led = true;
 
 // Is there a card detect line? It doesn't exist on the Adalogger featherwing,
 //  so can't make use of it there. Must always assume that there is a card.
@@ -289,7 +289,10 @@ void trigger(void)
     circ.Trigger();
 
     // Set the LED on when trigger occurs
-    digitalWrite(LED_PIN, HIGH);
+    if (use_led)
+    {
+        digitalWrite(LED_PIN, HIGH);
+    }
     ledOnCount = 500;
 }
 
@@ -503,6 +506,10 @@ void setup() {
         if (strcmp(c, "FREQ") == 0)
         {
           theAccel->setFreq(String(d).toInt());
+        }
+        if (strcmp(c, "LED") == 0)
+        {
+          if (d[0] == '0') use_led = false;
         }
       }
       dataFile.close();
