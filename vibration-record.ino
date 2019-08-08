@@ -105,12 +105,14 @@ int intCount = 0;
 
 #include "AccelAdxl355.h"
 #include "AccelLsm6.h"
+#include "AccelAnalogue.h"
 #include "ProcessorSamd21.h"
 
 /* Define the singleton variable! Two choices:   */
 
-LSM6DS   theAccelLsm6;
-ADXL355  theAccelAdxl;
+LSM6DS        theAccelLsm6;
+ADXL355       theAccelAdxl;
+AccelAnalogue theAccelAnalogue;
 
 
 class Accel   * theAccel;
@@ -311,6 +313,112 @@ void sample(void)
 }
 
 
+///////////////////////////////////////////////////////////////////////
+/////// Interrupt-triggered ADC (for analogue devices only)     //////
+
+
+static volatile unsigned int sums[3];
+static volatile unsigned int counts [3];
+
+static volatile unsigned int tc3_int_count = 0;
+static volatile uint16_t tc3_period = 16000;
+
+void TC3_Handler (void)
+{
+  if (!!TC3->COUNT16.INTFLAG.bit.MC0)
+  {
+    tc3_int_count ++;
+    intCount ++;
+  
+    if (intCount <= 175)  // expect about 125 readings per second. Place a limit
+    {
+
+        float readings [3];
+
+        (void) theAccel->getSingleReading(readings);
+    
+        if (theAccel->useLinearFifo())
+        {
+            addToLinearFifo(readings);
+
+            avgs.Add(readings);
+
+            sample();
+
+            if (avgs.IsTriggered())
+            {
+                trigger();
+            }
+        }
+        else
+        {
+            // Nothing defined here. ADC reading is currently only supported when using the linear FIFO 
+            gotReadings ++;
+        }
+    }
+    if (intCount > 3000)
+    {
+        NVIC_DisableIRQ(TC3_IRQn); // "Panic button". Stop if we get too many of these interrupts
+    }
+
+    TC3->COUNT16.INTFLAG.bit.MC0 = 1;  // clear flag
+    NVIC_ClearPendingIRQ(TC3_IRQn);
+  }
+}
+
+static void Setup_TC3(void)
+{
+  tc3_int_count = 0;
+  tc3_period = 16000;
+
+  PM->APBCMASK.bit.TC3_ = 1;  
+
+  GCLK->GENCTRL.reg = 0x00010601;  // GCLK1 sourced from OSC8M
+  GCLK->CLKCTRL.reg = 0x411B;  // GCLK1 to TC3
+
+  TC3->COUNT16.CTRLA.bit.SWRST = 1;
+  delay(100);
+  TC3->COUNT16.CTRLA.bit.ENABLE = 0;
+  TC3->COUNT16.CTRLBSET.bit.CMD = 0x2;
+  // Div-4 prescaler
+  TC3->COUNT16.CTRLA.reg = 0x0220;
+  TC3->COUNT16.CC[0].reg = tc3_period;
+  TC3->COUNT16.INTENSET.bit.MC0 = 1;
+  
+  TC3->COUNT16.CTRLA.bit.ENABLE = 1;
+  
+  TC3->COUNT16.CTRLBSET.bit.CMD = 0x1;
+
+  NVIC_SetPriority(TC4_IRQn, 2);
+  NVIC_EnableIRQ(TC3_IRQn);
+}
+
+void minuteTimer(void)
+{
+    // Re-adjust the TC3 timeout to aim for exact 125Hz
+
+    if (tc3_int_count >= 126*60 && tc3_period < 18000)
+    {
+      tc3_period += 40;
+      TC3->COUNT16.CC[0].reg = tc3_period;
+    }
+    else if (tc3_int_count > 125*60 && tc3_period < 18000)
+    {
+      tc3_period += 1;
+      TC3->COUNT16.CC[0].reg = tc3_period;
+    }
+    else if (tc3_int_count <= 124*60 && tc3_period > 14000)
+    {
+      tc3_period -= 40;
+      TC3->COUNT16.CC[0].reg = tc3_period;
+    }
+    else if (tc3_int_count < 125*60 && tc3_period > 14000)
+    {
+      tc3_period -= 1;
+      TC3->COUNT16.CC[0].reg = tc3_period;
+    }
+    tc3_int_count = 0;
+}
 
 
 
@@ -457,7 +565,11 @@ void setup() {
   //         Revision 3, Die 0, Cortex-M0+).
 
 
-  if (boardIsAdxl())
+  if (boardIsAnalogue())
+  {
+      theAccel = &theAccelAnalogue;
+  }
+  else if (boardIsAdxl())
   {
       theAccel = &theAccelAdxl;
   }
@@ -529,6 +641,8 @@ void setup() {
   
 
   Setup_TC4(theAccel->getTimerReload());
+  Setup_TC3();
+
 
   if (use_serial)
   {

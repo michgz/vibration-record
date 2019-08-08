@@ -3,7 +3,19 @@
 
 extern bool boardIsAdxl(void);
 
+extern bool boardIsAnalogue(void);
+
 extern bool boardIsFeatherAdalogger(void);
+
+typedef struct
+{
+    bool   isAnalogue;   // Next values only matter if this is true
+    float  scale;
+    float  offset;
+  
+} ANALOGUE_ACCEL_DEFINITION_T;
+
+
 
 #endif  // BOARD_H_
 
