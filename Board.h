@@ -7,6 +7,8 @@ extern bool boardIsAnalogue(void);
 
 extern bool boardIsFeatherAdalogger(void);
 
+extern bool boardHasMcp9808(void);
+
 typedef struct
 {
     bool   isAnalogue;   // Next values only matter if this is true
@@ -18,4 +20,3 @@ typedef struct
 
 
 #endif  // BOARD_H_
-

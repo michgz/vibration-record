@@ -30,6 +30,7 @@
 #include "RtcCli.h"
 #include "Accel.h"
 #include "Board.h"
+#include "TempMcp9808.h"
 
 
 
@@ -217,7 +218,7 @@ bool writeToLog(int what)
 
     if (what == 0 || what == 2)
     {
-      sprintf(c, "S=%s Tacc=%0.2f Tint=%0.2f Vbat=%0.3f VCCIO=%0.3f VCCCORE=%0.3f", theAccel->getName(), theAccel->readTemperature(), ReadTemperature(), ReadVBAT(), ReadVCCIO(), ReadVCCCORE());
+      sprintf(c, "S=%s Tacc=%0.2f Tint=%0.2f Text=%0.3f Vbat=%0.3f VCCIO=%0.3f VCCCORE=%0.3f", theAccel->getName(), theAccel->readTemperature(), ReadTemperature(), (boardHasMcp9808()? ReadMCP9808() : 0.0f), ReadVBAT(), ReadVCCIO(), ReadVCCCORE());
       dataFile.println(String(c));
       if (what == 2)
       {

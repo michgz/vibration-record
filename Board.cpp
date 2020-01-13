@@ -38,12 +38,21 @@ typedef enum
 } LOGGER_DEFINITION_T;
 
 
+// Defines the external (i.e. other than in the MCU or accelerometer) temperature sensor.
+// Only one is defined -- it is the +/- 0.5 degC MCP9808.
+typedef enum
+{
+    DEFINITION_EXT_TEMPERATURE_NONE = 0,
+    DEFINITION_EXT_TEMPERATURE_MCP9808 = 1
+} EXTERNAL_TEMPERATURE_T;
+
 
 typedef struct
 {
     unsigned int serial_number [4];   // The serial number which this applies to.
     ACCEL_DEFINITION_T accelDef;
     LOGGER_DEFINITION_T loggerDef;
+    EXTERNAL_TEMPERATURE_T extTempDef;
 
 } DEVICE_DEFINITION_T;
 
@@ -54,20 +63,23 @@ const static DEVICE_DEFINITION_T boardDefinitions[] =
     {
         {0xF5DAD2B9 ,  0x504D5741 ,  0x372E3120 ,  0xFF132043},
         DEFINITION_ADXL355,
-        DEFINITION_FEATHER_ADALOGGER
+        DEFINITION_FEATHER_ADALOGGER,
+        DEFINITION_EXT_TEMPERATURE_MCP9808
     },
 
 /*
     {
         {0x50E910B8 ,  0x504D5741 ,  0x372E3120 ,  0xFF19232E},
         DEFINITION_LSM6DS3,
-        DEFINITION_FEATHERWING_ADALOGGER
+        DEFINITION_FEATHERWING_ADALOGGER,
+        DEFINITION_EXT_TEMPERATURE_NONE
     }
 */
     {
         {0x50E910B8 ,  0x504D5741 ,  0x372E3120 ,  0xFF19232E},
         DEFINITION_ADXL335,
-        DEFINITION_FEATHERWING_ADALOGGER
+        DEFINITION_FEATHERWING_ADALOGGER,
+        DEFINITION_EXT_TEMPERATURE_NONE
     }
 
 };
@@ -129,7 +141,20 @@ bool boardIsFeatherAdalogger(void)
   
 }
 
+bool boardHasMcp9808(void)
+{
+    int i;
 
+    for (i = 0; i < sizeof(boardDefinitions)/sizeof(boardDefinitions[0]); i++)
+    {
+        if (     (boardDefinitions[i].serial_number[0] == UNIQUE_SERIAL_NUMBER_0)
+              && (boardDefinitions[i].serial_number[1] == UNIQUE_SERIAL_NUMBER_1)
+              && (boardDefinitions[i].serial_number[2] == UNIQUE_SERIAL_NUMBER_2)
+              && (boardDefinitions[i].serial_number[3] == UNIQUE_SERIAL_NUMBER_3)   )
+        {
+            return boardDefinitions[i].extTempDef == DEFINITION_EXT_TEMPERATURE_MCP9808;
+        }
+    }
 
-
-
+    return false;   // Defaults to false
+}
