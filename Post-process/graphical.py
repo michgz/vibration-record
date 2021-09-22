@@ -8,7 +8,11 @@ from matplotlib import dates
 import datetime
 import numpy
 import scipy.signal
+import pickle
+import os
+import os.path
 import sys
+
 
 
 INPUT_FILE = ""  # to be filled
@@ -156,6 +160,40 @@ def calculate_filtered_rms(a):
 
 
 
+def calculate_windowed_rms(a, window_length=25):
+    
+    f = scipy.signal.butter(4, (2, 25), btype='band', analog=False, output='sos', fs=125.)
+    w = scipy.signal.windows.blackman(window_length, sym=False)
+    kernel = 2. / numpy.sum(w)
+  
+    if a['type'] != 'TRACE':
+        return 0.
+  
+    tot = 0.
+    
+    i = scipy.signal.detrend(a['x'], type='constant')
+    j = numpy.power(scipy.signal.sosfilt(f, i)  ,  2.0  )
+    k = scipy.signal.convolve(j, w, mode='same')
+    tot += numpy.max(k)
+    
+    i = scipy.signal.detrend(a['y'], type='constant')
+    j = numpy.power(scipy.signal.sosfilt(f, i)  ,  2.0  )
+    k = scipy.signal.convolve(j, w, mode='same')
+    tot += numpy.max(k)
+
+    i = scipy.signal.detrend(a['z'], type='constant')
+    j = numpy.power(scipy.signal.sosfilt(f, i)  ,  2.0  )
+    k = scipy.signal.convolve(j, w, mode='same')
+    tot += numpy.max(k)
+
+    return numpy.sqrt(tot*kernel)
+    
+    
+
+
+
+
+
 def calculate_frequency(a):
 
     if a['type'] != 'TRACE':
@@ -177,12 +215,16 @@ PLOT_CORRELATIONS = False   # Used to try to "patchwork" together overlapping tr
 
 
 
+if os.path.isfile("1.pickle"):
+    with open("1.pickle", "rb") as f1:
+        aa = pickle.load(f1)
 
-
-aa = ReadFile(INPUT_FILE,
-                  datetime.datetime.strptime("07/09/2021 21:08:00", "%d/%m/%Y %H:%M:%S"),
-                  datetime.datetime.strptime("06/01/2048 16:39:12", "%d/%m/%Y %H:%M:%S"))
-
+else:
+    aa = ReadFile(INPUT_FILE,
+                      datetime.datetime.strptime("07/09/2021 21:08:00", "%d/%m/%Y %H:%M:%S"),
+                      datetime.datetime.strptime("06/01/2048 16:39:12", "%d/%m/%Y %H:%M:%S"))
+    with open("1.pickle", "wb") as f1:
+        pickle.dump(aa, f1)
 
 
 with open("TIMES.csv", "w") as f2:
@@ -212,11 +254,16 @@ with open("TIMES.csv", "w") as f2:
             
 
 
+
 with open("TOTAL_RMS.csv", "w") as f1:
   
     for aaa in aa:
         f1.write(  aaa['datetime'].strftime("%d/%m/%Y %H:%M:%S")  + ",{0}".format(calculate_filtered_rms(aaa)))
+        f1.write( ",{0},{1}".format(  calculate_windowed_rms(aaa, 25), calculate_windowed_rms(aaa, 125)  ))
         f1.write( ",{0}\n".format(   calculate_frequency(aaa)  ))
+
+
+
 
 
 
@@ -224,8 +271,8 @@ with open("TOTAL_RMS.csv", "w") as f1:
 idx = 17   # a "nice" example signal
 
 
-calculate_frequency(aa[17])
-sys.exit(0)
+#calculate_frequency(aa[17])
+#sys.exit(0)
 
 
 if False:
@@ -303,7 +350,7 @@ else:
             plt.plot(aaa['y'])
             plt.plot(aaa['z'])
             #plt.title(aaa['datetime'].strftime("%d/%m/%Y %H:%M:%S"))
-            plt.title("{0}".format(  calculate_filtered_rms(aaa)  ))
+            plt.title("{0}".format(  calculate_windowed_rms(aaa)  ))
             #plt.title(j)
             plt.show()
 
